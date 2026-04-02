@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homestretch Havoc</title>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5E6C8;
+    --gold: #C9952A;
+    --dark-brown: #2C1A0E;
+    --mid-brown: #5C3317;
+    --track-brown: #8B5E3C;
+    --grass-green: #4A7C3F;
+    --fence-white: #F0EDE4;
+    --accent-red: #9B2335;
+    --sky-blue: #87CEEB;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Oswald', sans-serif;
+    background: var(--dark-brown);
+    color: var(--cream);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .screen.active { display: flex; }
+
+  /* ============ START SCREEN ============ */
+  #start-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%),
+      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><radialGradient id="sky" cx="50%" cy="0%" r="100%"><stop offset="0%" stop-color="%2387CEEB"/><stop offset="100%" stop-color="%23D4A843"/></radialGradient></defs><rect width="800" height="400" fill="url(%23sky)"/><ellipse cx="150" cy="80" rx="80" ry="40" fill="white" opacity="0.8"/><ellipse cx="600" cy="60" rx="100" ry="45" fill="white" opacity="0.7"/><rect y="370" width="800" height="230" fill="%234A7C3F"/><rect y="320" width="800" height="70" fill="%236B8F5E"/><rect y="290" width="800" height="40" fill="%23967444"/><rect y="260" width="800" height="40" fill="%238B5E3C"/><line x1="0" y1="295" x2="800" y2="295" stroke="white" stroke-width="4" opacity="0.9"/><line x1="0" y1="295" x2="800" y2="295" stroke="%23888" stroke-width="2" stroke-dasharray="20,15" opacity="0.5"/></svg>') center/cover no-repeat;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #start-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,149,42,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .start-title-wrapper {
+    text-align: center;
+    margin-bottom: 60px;
+    animation: titleDrop 1s ease-out;
+  }
+
+  @keyframes titleDrop {
+    from { transform: translateY(-80px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .start-subtitle {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.6em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .start-title {
+    font-family: 'Rye', serif;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    color: var(--cream);
+    text-shadow:
+      4px 4px 0px var(--dark-brown),
+      0 0 60px rgba(201,149,42,0.6),
+      0 0 120px rgba(201,149,42,0.3);
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  .title-line2 {
+    color: var(--gold);
+    display: block;
+  }
+
+  .start-deco {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    justify-content: center;
+  }
+
+  .start-deco-line {
+    height: 2px;
+    width: 80px;
+    background: linear-gradient(to right, transparent, var(--gold));
+  }
+  .start-deco-line:last-child {
+    background: linear-gradient(to left, transparent, var(--gold));
+  }
+
+  .start-deco-icon { color: var(--gold); font-size: 1.4rem; }
+
+  .btn-start {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--gold) 0%, #E8B84B 50%, var(--gold) 100%);
+    color: var(--dark-brown);
+    border: none;
+    padding: 18px 60px;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+    transition: all 0.2s;
+    animation: pulseBtn 2s ease-in-out infinite;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  @keyframes pulseBtn {
+    0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    50% { transform: scale(1.04); box-shadow: 0 12px 40px rgba(201,149,42,0.4); }
+  }
+
+  .btn-start:hover {
+    background: linear-gradient(135deg, #E8B84B 0%, var(--gold) 50%, #E8B84B 100%);
+    transform: scale(1.08) !important;
+    animation: none;
+  }
+
+  .start-balance {
+    margin-top: 24px;
+    font-size: 0.95rem;
+    color: rgba(245,230,200,0.7);
+    letter-spacing: 0.15em;
+  }
+
+  /* ============ HORSE SELECT SCREEN ============ */
+  #select-screen {
+    flex-direction: column;
+    background: linear-gradient(160deg, #1a0e06 0%, #2C1A0E 50%, #1a0e06 100%);
+  }
+
+  .screen-header {
+    padding: 20px 40px 16px;
+    border-bottom: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+
+  .screen-header h2 {
+    font-family: 'Rye', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--dark-brown);
+  }
+
+  .header-balance {
+    font-size: 1.1rem;
+    color: var(--cream);
+    letter-spacing: 0.1em;
+  }
+
+  .header-balance span { color: var(--gold); font-weight: 700; }
+
+  .horses-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px 32px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .horse-card {
+    background: linear-gradient(135deg, rgba(92,51,23,0.6) 0%, rgba(44,26,14,0.8) 100%);
+    border: 2px solid rgba(201,149,42,0.3);
+    border-radius: 4px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .horse-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,149,42,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .horse-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(201,149,42,0.2);
+  }
+
+  .horse-card:hover::before { opacity: 1; }
+
+  .horse-card.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--gold), 0 8px 24px rgba(0,0,0,0.5), inset 0 0 30px rgba(201,149,42,0.15);
+  }
+
+  .horse-card.selected::before { opacity: 1; }
+
+  .horse-number-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
+    background: var(--gold);
+    color: var(--dark-brown);
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .horse-thumb {
+    width: 100%;
+    height: 90px;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .horse-canvas-thumb {
+    width: 100%;
+    height: 90px;
+    image-rendering: pixelated;
+  }
+
+  .horse-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .horse-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: rgba(245,230,200,0.7);
+  }
+
+  .horse-odds {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .select-footer {
+    padding: 16px 32px;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(201,149,42,0.3);
+  }
+
+  /* ============ BET SCREEN ============ */
+  #bet-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #1a0e06 0%, #2C1A0E 100%);
+    gap: 32px;
+  }
+
+  .bet-title {
+    font-family: 'Rye', serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    text-shadow: 3px 3px 0 var(--dark-brown);
+    text-align: center;
+  }
+
+  .bet-card {
+    background: linear-gradient(135deg, rgba(92,51,23,0.7) 0%, rgba(44,26,14,0.9) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-width: 400px;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.6), inset 0 0 60px rgba(201,149,42,0.05);
+  }
+
+  .bet-horse-display {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .bet-horse-canvas {
+    width: 180px;
+    height: 120px;
+    image-rendering: pixelated;
+    border: 1px solid rgba(201,149,42,0.3);
+  }
+
+  .bet-horse-info { display: flex; flex-direction: column; gap: 6px; }
+
+  .bet-horse-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--cream);
+  }
+
+  .bet-horse-detail {
+    font-size: 0.9rem;
+    color: rgba(245,230,200,0.7);
+    letter-spacing: 0.05em;
+  }
+
+  .bet-horse-detail strong { color: var(--gold); }
+
+  .bet-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+
+  .bet-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .bet-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: rgba(245,230,200,0.7);
+    text-transform: uppercase;
+  }
+
+  .bet-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .bet-dollar {
+    position: absolute;
+    left: 14px;
+    font-size: 1.2rem;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .bet-input {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(201,149,42,0.5);
+    color: var(--cream);
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    padding: 12px 20px 12px 36px;
+    width: 200px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+    border-radius: 2px;
+  }
+
+  .bet-input:focus { border-color: var(--gold); }
+
+  .bet-balance {
+    font-size: 0.9rem;
+    color: rgba(245,230,200,0.6);
+  }
+
+  .bet-balance span { color: var(--gold); }
+
+  .bet-preview {
+    font-size: 0.85rem;
+    color: rgba(245,230,200,0.7);
+    text-align: center;
+    min-height: 20px;
+  }
+
+  .bet-preview strong { color: #6fcf97; }
+
+  /* ============ SHARED BUTTON STYLES ============ */
+  .btn-primary {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--gold) 0%, #E8B84B 50%, var(--gold) 100%);
+    color: var(--dark-brown);
+    border: none;
+    padding: 14px 48px;
+    cursor: pointer;
+    clip-path: polygon(6px 0%, calc(100% - 6px) 0%, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0% calc(100% - 6px), 0% 6px);
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #E8B84B 0%, var(--gold) 50%, #E8B84B 100%);
+    transform: scale(1.05);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    padding: 10px 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(201,149,42,0.1);
+  }
+
+  /* ============ RACE SCREEN ============ */
+  #race-screen {
+    flex-direction: column;
+    background: var(--dark-brown);
+    position: relative;
+  }
+
+  #race-canvas {
+    width: 100%;
+    flex: 1;
+    display: block;
+  }
+
+  .race-commentary {
+    background: rgba(0,0,0,0.7);
+    border-top: 2px solid var(--gold);
+    padding: 10px 32px;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    color: var(--cream);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .commentary-icon { color: var(--gold); font-size: 1.2rem; }
+
+  /* ============ FINISH SCREEN ============ */
+  #finish-screen {
+    flex-direction: column;
+    background: var(--dark-brown);
+  }
+
+  #finish-canvas {
+    width: 100%;
+    flex: 1;
+    display: block;
+  }
+
+  .finish-banner {
+    background: linear-gradient(90deg, var(--dark-brown), rgba(201,149,42,0.3) 20%, rgba(201,149,42,0.3) 80%, var(--dark-brown));
+    border-top: 3px solid var(--gold);
+    border-bottom: 3px solid var(--gold);
+    padding: 12px;
+    text-align: center;
+    font-family: 'Rye', serif;
+    font-size: 1.8rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--dark-brown);
+    flex-shrink: 0;
+  }
+
+  /* ============ EARNINGS SCREEN ============ */
+  #earnings-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0e0806 0%, #2C1A0E 100%);
+    gap: 32px;
+  }
+
+  .earnings-title {
+    font-family: 'Rye', serif;
+    font-size: 2.8rem;
+    text-align: center;
+    text-shadow: 3px 3px 0 var(--dark-brown);
+  }
+
+  .earnings-title.win { color: #6fcf97; }
+  .earnings-title.loss { color: #EB5757; }
+
+  .earnings-card {
+    background: linear-gradient(135deg, rgba(92,51,23,0.7) 0%, rgba(44,26,14,0.95) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 40px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    min-width: 400px;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+  }
+
+  .earnings-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .earnings-row .label { color: rgba(245,230,200,0.7); }
+  .earnings-row .value { font-weight: 700; color: var(--cream); }
+
+  .earnings-total {
+    width: 100%;
+    padding-top: 20px;
+    border-top: 1px solid rgba(201,149,42,0.4);
+    text-align: center;
+  }
+
+  .earnings-total-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: rgba(245,230,200,0.6);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .earnings-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+
+  .earnings-number.counting { color: var(--gold); }
+  .earnings-number.final-win { color: #6fcf97; }
+  .earnings-number.final-loss { color: #EB5757; }
+
+  .earnings-buttons {
+    display: flex;
+    gap: 16px;
+  }
+
+  /* ============ LOADING ============ */
+  #loading-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--dark-brown);
+    gap: 24px;
+  }
+
+  .loading-text {
+    font-family: 'Rye', serif;
+    font-size: 2rem;
+    color: var(--gold);
+  }
+
+  .loading-bar-wrap {
+    width: 300px;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .loading-bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--gold), #E8B84B);
+    width: 0%;
+    animation: loadFill 2s ease-out forwards;
+    border-radius: 4px;
+  }
+
+  @keyframes loadFill {
+    to { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen" class="screen active">
+  <div class="loading-text">Homestretch Havoc</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div style="color:rgba(245,230,200,0.5);font-size:0.85rem;letter-spacing:0.15em;">LOADING HORSES...</div>
+</div>
+
+<!-- START SCREEN -->
+<div id="start-screen" class="screen">
+  <div class="start-title-wrapper">
+    <div class="start-subtitle">★ Welcome to ★</div>
+    <h1 class="start-title">
+      Homestretch<br>
+      <span class="title-line2">Havoc</span>
+    </h1>
+    <div class="start-deco">
+      <div class="start-deco-line"></div>
+      <div class="start-deco-icon">🏇</div>
+      <div class="start-deco-line"></div>
+    </div>
+  </div>
+  <button class="btn-start" onclick="gotoSelect()">POST TIME</button>
+  <div class="start-balance" id="start-balance-display"></div>
+</div>
+
+<!-- HORSE SELECT SCREEN -->
+<div id="select-screen" class="screen">
+  <div class="screen-header">
+    <h2>🏇 Choose Your Horse</h2>
+    <div class="header-balance">Bankroll: <span id="select-balance">$500</span></div>
+  </div>
+  <div class="horses-grid" id="horses-grid"></div>
+  <div class="select-footer">
+    <button class="btn-primary" id="select-btn" onclick="gotoBet()" disabled>Select a Horse to Continue</button>
+  </div>
+</div>
+
+<!-- BET SCREEN -->
+<div id="bet-screen" class="screen">
+  <div class="bet-title">Place Your Wager</div>
+  <div class="bet-card">
+    <div class="bet-horse-display">
+      <canvas class="bet-horse-canvas" id="bet-canvas" width="180" height="120"></canvas>
+      <div class="bet-horse-info">
+        <div class="bet-horse-name" id="bet-horse-name">Horse Name</div>
+        <div class="bet-horse-detail">Number: <strong id="bet-horse-num">#1</strong></div>
+        <div class="bet-horse-detail">Odds: <strong id="bet-horse-odds" style="color:var(--gold)">5:1</strong></div>
+      </div>
+    </div>
+    <div class="bet-divider"></div>
+    <div class="bet-form">
+      <div class="bet-label">Your Wager</div>
+      <div class="bet-input-wrap">
+        <span class="bet-dollar">$</span>
+        <input class="bet-input" id="bet-amount" type="number" min="1" value="10" oninput="updateBetPreview()">
+      </div>
+      <div class="bet-balance">Available: <span id="bet-balance-display">$500</span></div>
+      <div class="bet-preview" id="bet-preview"></div>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button class="btn-secondary" onclick="gotoSelect()">← Back</button>
+      <button class="btn-primary" id="race-btn" onclick="startRace()">🏁 Start Race!</button>
+    </div>
+  </div>
+</div>
+
+<!-- RACE SCREEN -->
+<div id="race-screen" class="screen">
+  <canvas id="race-canvas"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text">The horses are at the gate...</span>
+  </div>
+</div>
+
+<!-- FINISH SCREEN -->
+<div id="finish-screen" class="screen">
+  <div class="finish-banner" id="finish-banner">🏆 AND THE WINNER IS...</div>
+  <canvas id="finish-canvas"></canvas>
+</div>
+
+<!-- EARNINGS SCREEN -->
+<div id="earnings-screen" class="screen">
+  <div class="earnings-title" id="earnings-title">Results</div>
+  <div class="earnings-card">
+    <div class="earnings-row">
+      <span class="label">Started With</span>
+      <span class="value" id="earn-started">$500</span>
+    </div>
+    <div class="earnings-row">
+      <span class="label">Your Horse</span>
+      <span class="value" id="earn-horse">—</span>
+    </div>
+    <div class="earnings-row">
+      <span class="label">Wager</span>
+      <span class="value" id="earn-wager">$0</span>
+    </div>
+    <div class="earnings-row">
+      <span class="label">Result</span>
+      <span class="value" id="earn-result">—</span>
+    </div>
+    <div class="earnings-total">
+      <div class="earnings-total-label">New Balance</div>
+      <div class="earnings-number counting" id="earnings-number">$500</div>
+    </div>
+  </div>
+  <div class="earnings-buttons">
+    <button class="btn-primary" onclick="playAgain()">🔄 Race Again</button>
+    <button class="btn-secondary" onclick="gotoStart()">🏠 Main Menu</button>
+  </div>
+</div>
+
+<script src="sprites.js"></script>
+<script>
+// ========== HORSE NAMES ==========
+const HORSE_NAMES = [
+  "Papa's Mustache","Snackrifice","Hoofhearted","Biscuit Riot","Sir Snacksalot",
+  "Marely Legal","Gallopagos","Bit Biscuit","Neighsayer","Turboferret",
+  "Whinnyford","Oatzilla","Scrumbucket","Trottertot","Haywire",
+  "Fastidious","Saddlepuff","Blinkbonk","Mudwink","Wigglepost",
+  "Crumbquest","Zoomlet","Nibblesworth","Derby Doodle","Cantorlot",
+  "Banterhoof","Snortstorm","Ploprocket","Fancy Rumpus","Giddyupcake",
+  "Taterdash","Clipclopify","Biscuitarium","Mister Maybe","Oopsie Daisy",
+  "Jolly Stampede","Hiccup Jack","Gallumph","Rufflebreeze","Sir Gallops",
+  "Oatquake","Muffinbolt","Pranceylvania","Trotskylark","Mayhem Mint",
+  "Chucklebred","Sneezelightning","Baron von Zoom","Wobblecharge","Sassaflash",
+  "Noodlecharger","Derbygoblin","Gravy Comet","Velocitater","Pudding Strike",
+  "Gallopjack","Neighpalm","Honkchester","Bopalong","Butterthunder",
+  "Tiz a Giggle","Crasheroo","Glitterhoof","Whee Biscuit","Fumblebee",
+  "Doodlecannon","Snack Baron","Toebeans","Clatterdash","Marshmallow Fang",
+  "Skedaddle","Bonkador","Mirthquake","Potato Current","Razzlepony",
+  "Silly Missile","Brisket","Zoomchester","Pompom Fury","Lord Oats",
+  "Rumblebiscuit","Hecklepenny","Quackspur","Whoa Nellie","Jamboree Jet",
+  "Chompion","Gallopoodle","Snickerflash","Wigglewire","Oatrageous",
+  "Picklesprint","Thundernugget","Cantankeray","Grin Reaper","Biscuit Blaster",
+  "Dazzlegrit","Rumorhasit","Sassy Laps","Mooch Rocket","Bananaglory"
+];
+
+// ========== STATE ==========
+let balance = 500;
+let horses = [];
+let selectedHorse = null;
+let betAmount = 10;
+let raceHorses = [];
+let winner = null;
+let spriteImages = {};
+let animFrame = null;
+
+// SPRITE SHEET: 4 cols x 4 rows = 16 frames, each 384x256
+const SPRITE_COLS = 4;
+const SPRITE_ROWS = 4;
+const FRAME_W = 384;
+const FRAME_H = 256;
+const TOTAL_FRAMES = 16;
+
+// ========== INIT ==========
+window.onload = function() {
+  // Load balance from localStorage
+  const saved = localStorage.getItem('homestretch_balance');
+  if (saved !== null) {
+    balance = parseFloat(saved) || 500;
+    if (balance < 10) balance = 500; // Reset if broke
+  }
+
+  // Load sprites
+  let loaded = 0;
+  const total = Object.keys(SPRITE_DATA).length;
+  for (let key in SPRITE_DATA) {
+    const img = new Image();
+    img.onload = () => {
+      loaded++;
+      if (loaded === total) {
+        setTimeout(() => showScreen('start-screen'), 500);
+      }
+    };
+    img.src = SPRITE_DATA[key];
+    spriteImages[key] = img;
+  }
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function saveBalance() {
+  localStorage.setItem('homestretch_balance', balance);
+}
+
+// ========== START SCREEN ==========
+function gotoStart() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  const d = document.getElementById('start-balance-display');
+  d.textContent = `Your current bankroll: $${balance.toFixed(2)}`;
+  showScreen('start-screen');
+}
+
+// ========== SELECT SCREEN ==========
+function gotoSelect() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  selectedHorse = null;
+  generateHorses();
+  renderHorseGrid();
+  document.getElementById('select-balance').textContent = '$' + balance.toFixed(2);
+  document.getElementById('select-btn').disabled = true;
+  document.getElementById('select-btn').textContent = 'Select a Horse to Continue';
+  showScreen('select-screen');
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateHorses() {
+  const names = shuffleArray(HORSE_NAMES).slice(0, 8);
+  // Assign unique numbers 1-10 (pick 8 from 1-10)
+  const nums = shuffleArray([1,2,3,4,5,6,7,8,9,10]).slice(0, 8);
+  // Assign sprite indices (we have 9 sprites, pick 8)
+  const spriteIdxs = shuffleArray([1,2,3,4,5,6,7,8,9]).slice(0, 8);
+  horses = names.map((name, i) => ({
+    name,
+    number: nums[i],
+    odds: Math.floor(Math.random() * 10) + 1,
+    spriteKey: `horse${spriteIdxs[i]}`,
+    id: i,
+  }));
+}
+
+function renderHorseGrid() {
+  const grid = document.getElementById('horses-grid');
+  grid.innerHTML = '';
+  horses.forEach((h, i) => {
+    const card = document.createElement('div');
+    card.className = 'horse-card';
+    card.id = `hcard-${i}`;
+
+    const badge = document.createElement('div');
+    badge.className = 'horse-number-badge';
+    badge.textContent = h.number;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'horse-canvas-thumb';
+    canvas.width = 384;
+    canvas.height = 256;
+    canvas.style.height = '90px';
+    setTimeout(() => drawSpriteFrame(canvas, h.spriteKey, 0), 0);
+
+    const name = document.createElement('div');
+    name.className = 'horse-name';
+    name.textContent = h.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'horse-meta';
+    meta.innerHTML = `<span>Odds: <span class="horse-odds">${h.odds}:1</span></span>`;
+
+    card.appendChild(badge);
+    card.appendChild(canvas);
+    card.appendChild(name);
+    card.appendChild(meta);
+    card.onclick = () => selectHorse(i);
+    grid.appendChild(card);
+  });
+}
+
+function drawSpriteFrame(canvas, spriteKey, frame) {
+  const ctx = canvas.getContext('2d');
+  const img = spriteImages[spriteKey];
+  if (!img || !img.complete) return;
+  const col = frame % SPRITE_COLS;
+  const row = Math.floor(frame / SPRITE_COLS);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height);
+}
+
+function selectHorse(idx) {
+  document.querySelectorAll('.horse-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`hcard-${idx}`).classList.add('selected');
+  selectedHorse = idx;
+  const btn = document.getElementById('select-btn');
+  btn.disabled = false;
+  btn.textContent = `Bet on ${horses[idx].name} →`;
+}
+
+// ========== BET SCREEN ==========
+function gotoBet() {
+  if (selectedHorse === null) return;
+  const h = horses[selectedHorse];
+
+  // Draw horse on bet canvas
+  const canvas = document.getElementById('bet-canvas');
+  canvas.width = 384;
+  canvas.height = 256;
+  setTimeout(() => drawSpriteFrame(canvas, h.spriteKey, 0), 0);
+
+  document.getElementById('bet-horse-name').textContent = h.name;
+  document.getElementById('bet-horse-num').textContent = `#${h.number}`;
+  document.getElementById('bet-horse-odds').textContent = `${h.odds}:1`;
+  document.getElementById('bet-balance-display').textContent = '$' + balance.toFixed(2);
+  document.getElementById('bet-amount').value = Math.min(10, balance);
+  document.getElementById('bet-amount').max = balance;
+  updateBetPreview();
+  showScreen('bet-screen');
+}
+
+function updateBetPreview() {
+  const input = document.getElementById('bet-amount');
+  const val = parseFloat(input.value) || 0;
+  const preview = document.getElementById('bet-preview');
+  const raceBtn = document.getElementById('race-btn');
+  if (val <= 0 || val > balance) {
+    preview.innerHTML = val > balance ? '<span style="color:#EB5757">Exceeds your bankroll!</span>' : '';
+    raceBtn.disabled = true;
+  } else {
+    const h = horses[selectedHorse];
+    const payout = (val * h.odds).toFixed(2);
+    preview.innerHTML = `Win returns: <strong>$${payout}</strong> profit`;
+    betAmount = val;
+    raceBtn.disabled = false;
+  }
+}
+
+// ========== RACE ==========
+const RACE_DURATION = 18000; // ms
+const NUM_HORSES = 8;
+const TRACK_HEIGHT_PER_LANE = 60;
+const HORSE_W = 100;
+const HORSE_H = 67;
+
+function startRace() {
+  const val = parseFloat(document.getElementById('bet-amount').value);
+  if (!val || val <= 0 || val > balance) return;
+  betAmount = val;
+
+  // Set up race horses
+  raceHorses = horses.map((h, i) => {
+    // Random base speed influenced by odds (lower odds = faster on avg)
+    const baseSpeed = (0.3 + Math.random() * 0.4) + (11 - h.odds) * 0.015;
+    return {
+      ...h,
+      x: -HORSE_W - 10,
+      speed: baseSpeed,
+      targetSpeed: baseSpeed,
+      animFrame: Math.floor(Math.random() * TOTAL_FRAMES),
+      animTimer: 0,
+      animSpeed: 80 + Math.random() * 60 - i * 8, // stagger
+      wobble: 0,
+      lane: i,
+      finished: false,
+      finishTime: null,
+      place: null,
+    };
+  });
+
+  winner = null;
+  showScreen('race-screen');
+  resizeCanvas('race-canvas');
+  runRace();
+}
+
+function resizeCanvas(id) {
+  const canvas = document.getElementById(id);
+  const container = canvas.parentElement;
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight - (id === 'race-canvas' ? 44 : 0);
+}
+
+let raceStart = null;
+let lastCommentary = 0;
+let commentaryIdx = 0;
+
+function runRace() {
+  const canvas = document.getElementById('race-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight - 44;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const finishX = W - 120;
+  const trackTop = 40;
+  const laneH = Math.min((H - trackTop - 20) / NUM_HORSES, 80);
+
+  let placesFinished = 0;
+  raceStart = performance.now();
+  lastCommentary = raceStart;
+  commentaryIdx = 0;
+
+  function drawTrack() {
+    // Sky
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, trackTop);
+    skyGrad.addColorStop(0, '#87CEEB');
+    skyGrad.addColorStop(1, '#B0E0F5');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, trackTop);
+
+    // Grass background
+    ctx.fillStyle = '#4A7C3F';
+    ctx.fillRect(0, trackTop, W, H - trackTop);
+
+    // Dirt track
+    const trackH = laneH * NUM_HORSES + 10;
+    const tY = trackTop + 5;
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(0, tY, W, trackH);
+
+    // Track texture stripes
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    for (let i = 0; i < NUM_HORSES; i++) {
+      if (i % 2 === 0) ctx.fillRect(0, tY + i * laneH, W, laneH);
+    }
+
+    // Lane dividers
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < NUM_HORSES; i++) {
+      ctx.beginPath();
+      ctx.setLineDash([10, 8]);
+      ctx.moveTo(0, tY + i * laneH);
+      ctx.lineTo(W, tY + i * laneH);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Fence top
+    ctx.fillStyle = '#F0EDE4';
+    ctx.fillRect(0, tY - 6, W, 4);
+    // Fence bottom
+    ctx.fillRect(0, tY + trackH, W, 4);
+
+    // Fence posts
+    ctx.fillStyle = '#D4C9A8';
+    for (let x = 0; x < W; x += 40) {
+      ctx.fillRect(x, tY - 10, 4, 14);
+      ctx.fillRect(x, tY + trackH, 4, 14);
+    }
+
+    // Finish line
+    ctx.fillStyle = '#fff';
+    for (let y = tY; y < tY + trackH; y += 14) {
+      ctx.fillRect(finishX, y, 8, 7);
+      ctx.fillRect(finishX + 8, y + 7, 8, 7);
+    }
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(finishX + 4, tY - 16);
+    ctx.lineTo(finishX + 4, tY - 4);
+    ctx.stroke();
+    // Flag
+    ctx.fillStyle = '#EB5757';
+    ctx.fillRect(finishX + 4, tY - 30, 20, 14);
+  }
+
+  function drawHorse(h, idx) {
+    const y = trackTop + 5 + idx * laneH + (laneH - HORSE_H) / 2 + 4;
+    const img = spriteImages[h.spriteKey];
+    if (!img) return;
+
+    const col = h.animFrame % SPRITE_COLS;
+    const row = Math.floor(h.animFrame / SPRITE_COLS);
+
+    // Wobble effect for speed variation
+    const wobbleY = Math.sin(h.wobble) * 1.5;
+
+    ctx.save();
+    ctx.drawImage(img,
+      col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
+      h.x, y + wobbleY, HORSE_W, HORSE_H
+    );
+
+    // Horse number
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.beginPath();
+    ctx.arc(h.x + 8, y + wobbleY + 8, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F5E6C8';
+    ctx.font = 'bold 9px Oswald, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(h.number, h.x + 8, y + wobbleY + 12);
+    ctx.restore();
+  }
+
+  function getLead() {
+    return [...raceHorses].sort((a, b) => b.x - a.x)[0];
+  }
+
+  const commentaryLines = [
+    () => `And they're off! ${raceHorses[Math.floor(Math.random()*8)].name} breaks from the gate!`,
+    () => `${getLead().name} has taken an early lead!`,
+    () => { const last = [...raceHorses].sort((a,b)=>a.x-b.x)[0]; return `${last.name} is struggling at the back of the pack!`; },
+    () => `${raceHorses[Math.floor(Math.random()*8)].name} is making a move on the outside!`,
+    () => `${getLead().name} is pulling away from the field!`,
+    () => `What a race! ${getLead().name} holds the lead heading into the final stretch!`,
+    () => `${raceHorses[Math.floor(Math.random()*8)].name} is giving it everything they've got!`,
+    () => `It's coming down to the wire! ${getLead().name} leads the charge!`,
+  ];
+
+  function updateCommentary(now) {
+    if (now - lastCommentary > 3000 && commentaryIdx < commentaryLines.length) {
+      document.getElementById('commentary-text').textContent = commentaryLines[commentaryIdx]();
+      commentaryIdx++;
+      lastCommentary = now;
+    }
+  }
+
+  function loop(now) {
+    const elapsed = now - raceStart;
+    const dt = 16;
+
+    ctx.clearRect(0, 0, W, H);
+    drawTrack();
+
+    // Update horses
+    raceHorses.forEach((h, i) => {
+      if (h.finished) {
+        // Keep drawing at finish but stopped
+        drawHorse(h, i);
+        return;
+      }
+
+      // Vary speed organically
+      h.targetSpeed = h.speed + Math.sin(elapsed * 0.001 + i * 1.3) * 0.08 + Math.random() * 0.02;
+      h.targetSpeed = Math.max(0.15, Math.min(0.65, h.targetSpeed));
+
+      // Lerp speed
+      const currentSpeed = h.targetSpeed;
+      h.x += currentSpeed * dt;
+      h.wobble += 0.15;
+
+      // Animate sprite
+      h.animTimer += dt;
+      if (h.animTimer > h.animSpeed) {
+        h.animFrame = (h.animFrame + 1) % TOTAL_FRAMES;
+        h.animTimer = 0;
+      }
+
+      drawHorse(h, i);
+
+      // Check finish
+      if (h.x + HORSE_W >= finishX && !h.finished) {
+        h.finished = true;
+        h.finishTime = now;
+        h.place = ++placesFinished;
+        if (placesFinished === 1) {
+          winner = h;
+          document.getElementById('commentary-text').textContent = `🏆 ${h.name} crosses the finish line first!`;
+        }
+      }
+    });
+
+    updateCommentary(now);
+
+    // Check if race is over (all finished or winner found and some time passed)
+    if (winner && now - winner.finishTime > 2500) {
+      cancelAnimationFrame(animFrame);
+      setTimeout(() => showFinish(), 300);
+      return;
+    }
+
+    animFrame = requestAnimationFrame(loop);
+  }
+
+  animFrame = requestAnimationFrame(loop);
+}
+
+// ========== FINISH SCREEN ==========
+function showFinish() {
+  showScreen('finish-screen');
+  const canvas = document.getElementById('finish-canvas');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight - 60;
+
+  const banner = document.getElementById('finish-banner');
+  banner.textContent = `🏆 ${winner.name} WINS THE RACE! 🏆`;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const laneH = Math.min((H - 10) / NUM_HORSES, 80);
+
+  // Sort horses: winner first, then by finish position
+  const sorted = [...raceHorses].sort((a, b) => {
+    if (a.finished && b.finished) return a.place - b.place;
+    if (a.finished) return -1;
+    if (b.finished) return 1;
+    return b.x - a.x;
+  });
+
+  // Position horses at finish - winner just past line, others staggered behind
+  const finishX = W - 160;
+  sorted.forEach((h, rank) => {
+    h.x = finishX - rank * 80;
+    h.lane = rank;
+  });
+
+  let frame = 0;
+  let timer = 0;
+
+  function drawFinishTrack() {
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 30);
+    skyGrad.addColorStop(0, '#87CEEB');
+    skyGrad.addColorStop(1, '#B0E0F5');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, 30);
+
+    ctx.fillStyle = '#4A7C3F';
+    ctx.fillRect(0, 30, W, H - 30);
+
+    const trackH = laneH * NUM_HORSES + 10;
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(0, 35, W, trackH);
+
+    // Finish line
+    for (let y = 35; y < 35 + trackH; y += 14) {
+      ctx.fillStyle = y % 28 < 14 ? '#fff' : '#222';
+      ctx.fillRect(finishX + HORSE_W - 5, y, 8, 7);
+      ctx.fillStyle = y % 28 >= 14 ? '#fff' : '#222';
+      ctx.fillRect(finishX + HORSE_W + 3, y, 8, 7);
+    }
+
+    // Fence
+    ctx.fillStyle = '#F0EDE4';
+    ctx.fillRect(0, 29, W, 4);
+    ctx.fillRect(0, 35 + trackH, W, 4);
+    ctx.fillStyle = '#D4C9A8';
+    for (let x = 0; x < W; x += 40) {
+      ctx.fillRect(x, 23, 4, 14);
+      ctx.fillRect(x, 35 + trackH, 4, 14);
+    }
+  }
+
+  function finishLoop(now) {
+    ctx.clearRect(0, 0, W, H);
+    drawFinishTrack();
+
+    timer += 16;
+    if (timer > 100) { frame = (frame + 1) % TOTAL_FRAMES; timer = 0; }
+
+    sorted.forEach((h, rank) => {
+      const y = 35 + rank * laneH + (laneH - HORSE_H) / 2 + 4;
+      const img = spriteImages[h.spriteKey];
+      if (!img) return;
+      const col = frame % SPRITE_COLS;
+      const row = Math.floor(frame / SPRITE_COLS);
+
+      ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
+        h.x, y, HORSE_W, HORSE_H);
+
+      // Place badge
+      const placeColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+      const placeLabel = ['1ST', '2ND', '3RD'];
+      if (rank < 3) {
+        ctx.fillStyle = placeColors[rank];
+        ctx.fillRect(h.x - 36, y + 4, 30, 20);
+        ctx.fillStyle = '#111';
+        ctx.font = 'bold 10px Oswald, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(placeLabel[rank], h.x - 21, y + 17);
+      }
+
+      // Name label
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      const tw = ctx.measureText(h.name).width + 12;
+      ctx.fillRect(h.x, y - 20, tw, 18);
+      ctx.fillStyle = rank === 0 ? '#FFD700' : '#F5E6C8';
+      ctx.font = `${rank === 0 ? 'bold' : ''} 11px Oswald, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(h.name, h.x + 6, y - 6);
+    });
+
+    animFrame = requestAnimationFrame(finishLoop);
+  }
+
+  animFrame = requestAnimationFrame(finishLoop);
+  setTimeout(() => {
+    cancelAnimationFrame(animFrame);
+    showEarnings();
+  }, 4000);
+}
+
+// ========== EARNINGS ==========
+function showEarnings() {
+  const myHorse = horses[selectedHorse];
+  const won = winner.id === myHorse.id;
+  const startBalance = balance;
+
+  let change;
+  if (won) {
+    change = betAmount * myHorse.odds;
+    balance += change;
+  } else {
+    change = -betAmount;
+    balance += change;
+    if (balance < 0) balance = 0;
+  }
+  saveBalance();
+
+  document.getElementById('earnings-title').textContent = won ? '🏆 WINNER!' : '😔 Better Luck Next Time';
+  document.getElementById('earnings-title').className = 'earnings-title ' + (won ? 'win' : 'loss');
+  document.getElementById('earn-started').textContent = '$' + startBalance.toFixed(2);
+  document.getElementById('earn-horse').textContent = myHorse.name + (won ? ' 🏆' : '');
+  document.getElementById('earn-wager').textContent = '$' + betAmount.toFixed(2);
+  document.getElementById('earn-result').textContent = won
+    ? `Won $${change.toFixed(2)} (${myHorse.odds}:1 odds!)`
+    : `Lost $${betAmount.toFixed(2)}`;
+  document.getElementById('earn-result').style.color = won ? '#6fcf97' : '#EB5757';
+
+  showScreen('earnings-screen');
+
+  // Animate number counting
+  const el = document.getElementById('earnings-number');
+  el.className = 'earnings-number counting';
+  const target = balance;
+  let current = startBalance;
+  const duration = 2000;
+  const start = performance.now();
+
+  function countUp(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+    current = startBalance + (target - startBalance) * eased;
+    el.textContent = '$' + current.toFixed(2);
+    if (p < 1) {
+      requestAnimationFrame(countUp);
+    } else {
+      el.textContent = '$' + target.toFixed(2);
+      el.className = 'earnings-number ' + (won ? 'final-win' : 'final-loss');
+    }
+  }
+  requestAnimationFrame(countUp);
+}
+
+function playAgain() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  gotoSelect();
+}
+</script>
+</body>
+</html>
