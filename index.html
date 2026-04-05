@@ -207,7 +207,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 52px;
+    bottom: 28px;
     padding: 0 62px;
     font-size: 1.22rem;
     letter-spacing: 0.03em;
@@ -951,6 +951,8 @@ function getProjectedRaceOrderForStage(stageIndex) {
     .sort((a, b) => b.projectedProgress - a.projectedProgress);
 }
 
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
 function generateRaceCaption(stageIndex) {
   const projected = getProjectedRaceOrderForStage(stageIndex);
   const leader = projected[0];
@@ -970,48 +972,153 @@ function generateRaceCaption(stageIndex) {
     `The crowd is baffled. ${playerHorse.name} is a duck running ${ordinal(playerRank)}.`,
     `${playerHorse.name} waddles on. Currently ${ordinal(playerRank)}, somehow.`,
     `Still a duck. Still ${ordinal(playerRank)}. We are all witnessing something.`,
+    `${playerHorse.name} has no business being ${ordinal(playerRank)}. And yet.`,
+    `Quack. That's all. Just quack. ${ordinal(playerRank)}.`,
   ];
 
   let playerText;
   if (isDuck) {
-    playerText = duckLines[Math.min(stageIndex, duckLines.length - 1)];
-  } else if (playerRank === 1) playerText = `Your horse ${playerHorse.name} leads!`;
-  else if (playerRank === 2) playerText = `${playerHorse.name} is stalking the leader.`;
-  else if (playerRank <= 4) playerText = `${playerHorse.name} lurks in ${ordinal(playerRank)}.`;
-  else if (playerRank === projected.length) playerText = `${playerHorse.name} is LAST. Yikes.`;
-  else playerText = `${playerHorse.name} is back in ${ordinal(playerRank)}.`;
+    playerText = duckLines[Math.floor(Math.random() * duckLines.length)];
+  } else if (playerRank === 1) {
+    playerText = pick([
+      `Your horse ${playerHorse.name} leads the field!`,
+      `${playerHorse.name} is in front — keep it together!`,
+      `${playerHorse.name} commands from the front!`,
+      `Out in front, it's ${playerHorse.name}!`,
+    ]);
+  } else if (playerRank === 2) {
+    playerText = pick([
+      `${playerHorse.name} is stalking the leader.`,
+      `${playerHorse.name} sits just off the pace.`,
+      `${playerHorse.name} is right there — biding time.`,
+      `${playerHorse.name} in 2nd, coiled and ready.`,
+    ]);
+  } else if (playerRank <= 4) {
+    playerText = pick([
+      `${playerHorse.name} lurks in ${ordinal(playerRank)}.`,
+      `${playerHorse.name} is in ${ordinal(playerRank)}, still in the hunt.`,
+      `${playerHorse.name} tracking in ${ordinal(playerRank)}.`,
+      `${playerHorse.name} sitting ${ordinal(playerRank)}, waiting for a gap.`,
+    ]);
+  } else if (playerRank === projected.length) {
+    playerText = pick([
+      `${playerHorse.name} is LAST. Yikes.`,
+      `${playerHorse.name} bringing up the rear… way back.`,
+      `Dead last: ${playerHorse.name}. Not great.`,
+      `${playerHorse.name} is touring the course from behind.`,
+    ]);
+  } else {
+    playerText = pick([
+      `${playerHorse.name} is back in ${ordinal(playerRank)}.`,
+      `${playerHorse.name} finds ${ordinal(playerRank)}, needs to move.`,
+      `${playerHorse.name} has ground to make up from ${ordinal(playerRank)}.`,
+      `${ordinal(playerRank)} for ${playerHorse.name} — not ideal.`,
+    ]);
+  }
 
   if (stageIndex === 0) {
-    return `${leader.name} to the gate. ${trailer.name} looks lost. ${playerText}`;
+    return pick([
+      `${leader.name} strides to the gate. ${trailer.name} looks uncertain. ${playerText}`,
+      `${leader.name} walks in calmly. ${trailer.name} is already nervous. ${playerText}`,
+      `Into the gate — ${leader.name} looking sharp. ${trailer.name} acting up. ${playerText}`,
+      `The field loads up. ${leader.name} settles first. ${trailer.name} is a mess. ${playerText}`,
+      `${leader.name} draws the rail. ${trailer.name} is fidgeting badly. ${playerText}`,
+    ]);
   }
   if (stageIndex === 1) {
     return leaderChanged
-      ? `${leader.name} rockets out! ${prevLeader?.name ?? second.name} already fading. ${playerText}`
-      : `${leader.name} leads, ${second.name} right there. ${trailer.name} already in trouble. ${playerText}`;
+      ? pick([
+          `${leader.name} rockets out! ${prevLeader?.name ?? second.name} already fading. ${playerText}`,
+          `Boom — ${leader.name} explodes from the gate! ${prevLeader?.name ?? second.name} caught flat-footed. ${playerText}`,
+          `${leader.name} breaks on top! ${prevLeader?.name ?? second.name} stumbles at the start. ${playerText}`,
+          `Clean break for ${leader.name}! ${prevLeader?.name ?? second.name} left watching. ${playerText}`,
+        ])
+      : pick([
+          `${leader.name} leads, ${second.name} right there. ${trailer.name} already in trouble. ${playerText}`,
+          `${leader.name} sets the pace, ${second.name} glued to their flank. ${trailer.name} looks cooked. ${playerText}`,
+          `Early leader: ${leader.name}. ${second.name} pressing hard. ${trailer.name} won't factor. ${playerText}`,
+          `${leader.name} goes to the front. ${second.name} tracking. ${trailer.name} is already lost. ${playerText}`,
+          `Out they come — ${leader.name} takes command. ${trailer.name} in the back, going nowhere fast. ${playerText}`,
+        ]);
   }
   if (stageIndex === 2) {
     return leaderChanged
-      ? `${leader.name} surges past ${prevLeader?.name ?? second.name}! ${playerText}`
-      : `${leader.name} holds the edge. ${trailer.name} is cooked. ${playerText}`;
+      ? pick([
+          `${leader.name} surges past ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `New leader — ${leader.name} rolls by ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${prevLeader?.name ?? second.name} gives it up — ${leader.name} in front now! ${playerText}`,
+          `${leader.name} sweeps to the lead! ${prevLeader?.name ?? second.name} can't hold. ${playerText}`,
+        ])
+      : pick([
+          `${leader.name} holds the edge. ${trailer.name} is cooked. ${playerText}`,
+          `${leader.name} still in charge. ${trailer.name} already a spectator. ${playerText}`,
+          `${leader.name} settles into rhythm. ${second.name} hanging close. ${trailer.name} fading. ${playerText}`,
+          `Cruising: ${leader.name} in front, ${second.name} keeps the pressure on. ${playerText}`,
+          `${leader.name} looks comfortable. ${trailer.name} has nothing left to give. ${playerText}`,
+        ]);
   }
   if (stageIndex === 3) {
     return leaderChanged
-      ? `${leader.name} takes over from ${prevLeader?.name ?? second.name}! ${playerText}`
-      : `${leader.name} still rolling. ${trailer.name} has given up spiritually. ${playerText}`;
+      ? pick([
+          `${leader.name} takes over from ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `Lead change! ${leader.name} blows past ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${prevLeader?.name ?? second.name} is swallowed up — ${leader.name} on the move! ${playerText}`,
+          `${leader.name} puts it away on ${prevLeader?.name ?? second.name}! ${playerText}`,
+        ])
+      : pick([
+          `${leader.name} still rolling. ${trailer.name} has given up spiritually. ${playerText}`,
+          `${leader.name} grinding down the backstretch. ${trailer.name} is just running to finish. ${playerText}`,
+          `${leader.name} in command, ${second.name} breathing down their neck. ${playerText}`,
+          `Midrace, ${leader.name} leads. ${trailer.name} is going through the motions. ${playerText}`,
+          `${leader.name} shows the way. ${second.name} refuses to fold. ${trailer.name} is toast. ${playerText}`,
+        ]);
   }
   if (stageIndex === 4) {
     return leaderChanged
-      ? `${leader.name} makes a MOVE! Bye, ${prevLeader?.name ?? second.name}! ${playerText}`
-      : `${leader.name} won't quit. ${second.name} is coming! ${trailer.name} is just jogging now. ${playerText}`;
+      ? pick([
+          `${leader.name} makes a MOVE! Bye, ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${leader.name} POUNCES — ${prevLeader?.name ?? second.name} is done! ${playerText}`,
+          `There it is! ${leader.name} explodes past ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${prevLeader?.name ?? second.name} is gone — ${leader.name} takes over with authority! ${playerText}`,
+        ])
+      : pick([
+          `${leader.name} won't quit. ${second.name} is coming! ${trailer.name} is just jogging now. ${playerText}`,
+          `${leader.name} digging in as ${second.name} looms. ${trailer.name} is already thinking about dinner. ${playerText}`,
+          `${leader.name} under pressure from ${second.name}. This is getting interesting. ${playerText}`,
+          `${second.name} is closing on ${leader.name}! ${trailer.name} somewhere in the back. ${playerText}`,
+          `${leader.name} fighting off ${second.name}. ${trailer.name} gave up a furlong ago. ${playerText}`,
+        ]);
   }
   if (stageIndex === 5) {
     return leaderChanged
-      ? `${leader.name} hits the front! ${prevLeader?.name ?? second.name} is done! ${playerText}`
-      : `${leader.name} turns for home. ${second.name} is desperate. ${playerText}`;
+      ? pick([
+          `${leader.name} hits the front! ${prevLeader?.name ?? second.name} is done! ${playerText}`,
+          `${leader.name} takes command in the stretch! ${prevLeader?.name ?? second.name} crumbles! ${playerText}`,
+          `${prevLeader?.name ?? second.name} FADES — ${leader.name} blows past into the lead! ${playerText}`,
+          `Drama in the stretch — ${leader.name} rolls by ${prevLeader?.name ?? second.name}! ${playerText}`,
+        ])
+      : pick([
+          `${leader.name} turns for home. ${second.name} is desperate. ${playerText}`,
+          `Into the stretch — ${leader.name} in front, ${second.name} giving chase. ${playerText}`,
+          `${leader.name} hits the top of the lane. ${second.name} won't give up! ${playerText}`,
+          `${leader.name} for home — ${second.name} right there. This is a race! ${playerText}`,
+          `${leader.name} in front but ${second.name} is coming hard! ${playerText}`,
+        ]);
   }
   return leaderChanged
-    ? `${leader.name} kicks clear! ${prevLeader?.name ?? second.name} gone! ${playerText}`
-    : `${leader.name} for the wire — ${second.name} swinging wide! ${playerText}`;
+    ? pick([
+        `${leader.name} kicks clear! ${prevLeader?.name ?? second.name} gone! ${playerText}`,
+        `${leader.name} drives away! ${prevLeader?.name ?? second.name} has nothing left! ${playerText}`,
+        `${leader.name} surges clear at the wire! ${prevLeader?.name ?? second.name} fades! ${playerText}`,
+        `${prevLeader?.name ?? second.name} is swamped — ${leader.name} to the wire! ${playerText}`,
+      ])
+    : pick([
+        `${leader.name} for the wire — ${second.name} swinging wide! ${playerText}`,
+        `${leader.name} and ${second.name} — side by side for the wire! ${playerText}`,
+        `They're driving to the line! ${leader.name} holding off ${second.name}! ${playerText}`,
+        `Final strides — ${leader.name} digs in as ${second.name} throws everything at them! ${playerText}`,
+        `${leader.name} clinging to the lead! ${second.name} coming like a freight train! ${playerText}`,
+      ]);
 }
 
 // ============================================================
@@ -1348,14 +1455,15 @@ function runRaceStage(stageIndex) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Green commentary bar at bottom
-    const barH = 90;
-    const barGrad = ctx.createLinearGradient(0, H - barH, 0, H);
-    barGrad.addColorStop(0, 'rgba(36,79,39,0.0)');
-    barGrad.addColorStop(0.18, 'rgba(36,79,39,0.88)');
-    barGrad.addColorStop(1, 'rgba(24,55,27,0.97)');
+    // Green commentary bar — starts just below the last horse lane, fills to bottom
+    const lastLaneBottom = trackTop + 34 + NUM_HORSES * laneH + 6;
+    const barTop = lastLaneBottom;
+    const barGrad = ctx.createLinearGradient(0, barTop, 0, H);
+    barGrad.addColorStop(0, 'rgba(30,68,33,0.0)');
+    barGrad.addColorStop(0.12, 'rgba(36,79,39,0.92)');
+    barGrad.addColorStop(1, 'rgba(18,48,22,1.0)');
     ctx.fillStyle = barGrad;
-    ctx.fillRect(0, H - barH, W, barH);
+    ctx.fillRect(0, barTop, W, H - barTop);
 
     ctx.fillStyle = '#F0EDE4';
     for (let i = 0; i < 4; i++) ctx.fillRect(0, trackTop + i * 7, W, 2);
