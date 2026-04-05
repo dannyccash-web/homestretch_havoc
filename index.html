@@ -560,24 +560,24 @@ const SPRITE_PATHS = {
 // ============================================================
 const HORSE_NAMES = [
   "Papa's Mustache","Snackrifice","Hoofhearted","Biscuit Riot","Sir Snacksalot",
-  "Marely Legal","Gallopagos","Bit Biscuit","Neighsayer","Turboferret",
+  "Marely Legal","Gallopagos","Stirrup Trouble","Neighsayer","Turboferret",
   "Whinnyford","Oatzilla","Scrumbucket","Trottertot","Haywire",
   "Fastidious","Saddlepuff","Blinkbonk","Mudwink","Wigglepost",
   "Crumbquest","Zoomlet","Nibblesworth","Derby Doodle","Cantorlot",
   "Banterhoof","Snortstorm","Ploprocket","Fancy Rumpus","Giddyupcake",
-  "Taterdash","Clipclopify","Biscuitarium","Mister Maybe","Oopsie Daisy",
+  "Taterdash","Clipclopify","Thunderpants","Mister Maybe","Oopsie Daisy",
   "Jolly Stampede","Hiccup Jack","Gallumph","Rufflebreeze","Sir Gallops",
   "Oatquake","Muffinbolt","Pranceylvania","Trotskylark","Mayhem Mint",
   "Chucklebred","Sneezelightning","Baron von Zoom","Wobblecharge","Sassaflash",
   "Noodlecharger","Derbygoblin","Gravy Comet","Velocitater","Pudding Strike",
   "Gallopjack","Neighpalm","Honkchester","Bopalong","Butterthunder",
-  "Tiz a Giggle","Crasheroo","Glitterhoof","Whee Biscuit","Fumblebee",
+  "Tiz a Giggle","Crasheroo","Glitterhoof","Straw Baroness","Fumblebee",
   "Doodlecannon","Snack Baron","Toebeans","Clatterdash","Marshmallow Fang",
   "Skedaddle","Bonkador","Mirthquake","Potato Current","Razzlepony",
   "Silly Missile","Brisket","Zoomchester","Pompom Fury","Lord Oats",
-  "Rumblebiscuit","Hecklepenny","Quackspur","Whoa Nellie","Jamboree Jet",
+  "Gallop Poll","Hecklepenny","Quackspur","Whoa Nellie","Jamboree Jet",
   "Chompion","Gallopoodle","Snickerflash","Wigglewire","Oatrageous",
-  "Picklesprint","Thundernugget","Cantankeray","Grin Reaper","Biscuit Blaster",
+  "Picklesprint","Thundernugget","Cantankeray","Grin Reaper","Biscuit Riot",
   "Dazzlegrit","Rumorhasit","Sassy Laps","Mooch Rocket","Bananaglory"
 ];
 
@@ -684,7 +684,7 @@ function generateHorses() {
   const spriteIdxs = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, 8);
   horses = names.map((name, i) => ({
     name, id: i,
-    odds: Math.floor(Math.random() * 10) + 1,
+    odds: Math.floor(Math.random() * 20) + 1,
     spriteKey: `horse${spriteIdxs[i]}`,
   }));
 }
@@ -857,7 +857,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen',
       canvasId: 'race-canvas',
       commentaryId: 'commentary-text',
-      bgTop: '#9cc7e8',
       duration: 7600,
       gateSequence: true
     },
@@ -866,7 +865,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-2',
       canvasId: 'race-canvas-2',
       commentaryId: 'commentary-text-2',
-      bgTop: '#95c3e3',
       duration: 5200
     },
     {
@@ -874,7 +872,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-3',
       canvasId: 'race-canvas-3',
       commentaryId: 'commentary-text-3',
-      bgTop: '#8dbddf',
       duration: 5200
     },
     {
@@ -882,7 +879,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-4',
       canvasId: 'race-canvas-4',
       commentaryId: 'commentary-text-4',
-      bgTop: '#86b7da',
       duration: 5400
     },
     {
@@ -890,7 +886,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-5',
       canvasId: 'race-canvas-5',
       commentaryId: 'commentary-text-5',
-      bgTop: '#80b1d5',
       duration: 5400
     },
     {
@@ -898,7 +893,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-6',
       canvasId: 'race-canvas-6',
       commentaryId: 'commentary-text-6',
-      bgTop: '#78abd0',
       duration: 5600
     },
     {
@@ -906,7 +900,6 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-7',
       canvasId: 'race-canvas-7',
       commentaryId: 'commentary-text-7',
-      bgTop: '#72a4ca',
       duration: 6200
     }
   ][stageIndex];
@@ -1090,12 +1083,22 @@ function runRaceStage(stageIndex) {
   function drawScene(pct, now) {
     ctx.clearRect(0, 0, W, H);
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, cfg.bgTop);
+    bg.addColorStop(0, '#3a6b32');
+    bg.addColorStop(0.38, '#5f944e');
     bg.addColorStop(0.58, '#d3b06d');
     bg.addColorStop(0.581, '#4A7C3F');
     bg.addColorStop(1, '#386532');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
+
+    // Green commentary bar at bottom
+    const barH = 90;
+    const barGrad = ctx.createLinearGradient(0, H - barH, 0, H);
+    barGrad.addColorStop(0, 'rgba(36,79,39,0.0)');
+    barGrad.addColorStop(0.18, 'rgba(36,79,39,0.88)');
+    barGrad.addColorStop(1, 'rgba(24,55,27,0.97)');
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(0, H - barH, W, barH);
 
     ctx.fillStyle = '#F0EDE4';
     for (let i = 0; i < 4; i++) ctx.fillRect(0, trackTop + i * 7, W, 2);
@@ -1111,13 +1114,6 @@ function runRaceStage(stageIndex) {
       ctx.lineTo(W, y + laneH - 4);
       ctx.stroke();
     }
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(startX, trackTop + 30);
-    ctx.lineTo(startX, trackTop + 30 + laneH * NUM_HORSES);
-    ctx.stroke();
 
     if (stageIndex === 6) {
       const flX = finishX + HORSE_W * 0.6;
@@ -1137,26 +1133,41 @@ function runRaceStage(stageIndex) {
     const gateX = startX + 86;
     const stageIsGate = !!cfg.gateSequence;
 
+    // Gate sequence timing constants
+    // 0.00 → 0.62  walk to gate
+    // 0.62 → 0.78  pause in gate (sprites frozen)
+    // 0.78         start bell fires (handled in loop below)
+    // 0.78 → 0.84  brief pause after bell
+    // 0.84 → 1.00  gate slides left + horses burst out
+
     if (stageIsGate) {
       const gateAreaTop = trackTop + 30;
       const gateAreaH = laneH * NUM_HORSES;
+
+      // How far the gate has slid off to the left (0 = in place, 1 = fully offscreen)
+      const slidePct = pct > 0.84 ? Math.min((pct - 0.84) / 0.16, 1) : 0;
+      // Match horse speed: horses go from stallTargetX toward startX+progress*raceWidth
+      // approximate slide speed: gate moves leftward at ~same pace
+      const gateSlideX = gateX - slidePct * (gateX + 80); // slides until negative (off left edge)
+      const gateDrawX = gateSlideX;
+
       ctx.fillStyle = 'rgba(80,80,88,0.55)';
-      ctx.fillRect(gateX - 16, gateAreaTop - 6, 16, gateAreaH + 12);
+      ctx.fillRect(gateDrawX - 16, gateAreaTop - 6, 16, gateAreaH + 12);
       ctx.fillStyle = 'rgba(130,130,138,0.88)';
-      ctx.fillRect(gateX, gateAreaTop - 4, 12, gateAreaH + 8);
+      ctx.fillRect(gateDrawX, gateAreaTop - 4, 12, gateAreaH + 8);
       for (let i = 0; i < NUM_HORSES; i++) {
         const stallY = trackTop + 34 + i * laneH + 3;
         ctx.strokeStyle = 'rgba(235,235,240,0.85)';
         ctx.lineWidth = 2;
-        ctx.strokeRect(gateX - 54, stallY, 54, HORSE_H - 2);
+        ctx.strokeRect(gateDrawX - 54, stallY, 54, HORSE_H - 2);
         const gateClosed = pct < 0.84;
         if (gateClosed) {
           ctx.strokeStyle = 'rgba(245,245,245,0.95)';
           ctx.beginPath();
-          ctx.moveTo(gateX - 54, stallY);
-          ctx.lineTo(gateX, stallY + HORSE_H - 2);
-          ctx.moveTo(gateX - 54, stallY + HORSE_H - 2);
-          ctx.lineTo(gateX, stallY);
+          ctx.moveTo(gateDrawX - 54, stallY);
+          ctx.lineTo(gateDrawX, stallY + HORSE_H - 2);
+          ctx.moveTo(gateDrawX - 54, stallY + HORSE_H - 2);
+          ctx.lineTo(gateDrawX, stallY);
           ctx.stroke();
         }
       }
@@ -1165,7 +1176,12 @@ function runRaceStage(stageIndex) {
     raceHorses.forEach((h, idx) => {
       const eased = pct < 0.5 ? 2 * pct * pct : 1 - Math.pow(-2 * pct + 2, 2) / 2;
       h.progress = startPositions[idx] + (targetPositions[idx] - startPositions[idx]) * eased;
-      h.animFrame = Math.floor((now / (stageIsGate ? 170 : 85) + idx * 2) % TOTAL_FRAMES);
+
+      // Freeze animation in gate pause (0.62–0.84), animate otherwise
+      const inGatePause = stageIsGate && pct >= 0.62 && pct < 0.84;
+      if (!inGatePause) {
+        h.animFrame = Math.floor((now / (stageIsGate && pct < 0.62 ? 170 : 85) + idx * 2) % TOTAL_FRAMES);
+      }
 
       const img = spriteImages[h.spriteKey];
       if (!img) return;
@@ -1219,10 +1235,18 @@ function runRaceStage(stageIndex) {
   }
 
   const stageStart = performance.now();
+  let bellFired = false;
   function loop(now) {
     const elapsed = now - stageStart;
     const pct = Math.min(elapsed / stageDuration, 1);
     drawScene(pct, now);
+
+    // Fire start bell mid-stage when gate opens (pct ~0.78)
+    if (cfg.gateSequence && !bellFired && pct >= 0.78) {
+      bellFired = true;
+      playStartBell();
+      startGallopFx();
+    }
 
     if (pct < 1) {
       animFrame = requestAnimationFrame(loop);
@@ -1230,7 +1254,6 @@ function runRaceStage(stageIndex) {
       cancelAnimationFrame(animFrame);
       animFrame = null;
       previousStageLeaderId = getRaceLeader().id;
-      if (stageIndex === 0) { playStartBell(); startGallopFx(); }
       if (stageIndex < 6) {
         setTimeout(() => runRaceStage(stageIndex + 1), 700);
       } else {
