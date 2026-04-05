@@ -369,7 +369,7 @@
       <div class="start-deco-line"></div>
     </div>
   </div>
-  <button class="btn-start" onclick="gotoSelect()">PLACE YOUR BETS!</button>
+  <button class="btn-start" onclick="playButtonClick();gotoSelect()">PLACE YOUR BETS!</button>
   <div class="start-balance" id="start-balance-display"></div>
 </div>
 
@@ -381,7 +381,7 @@
   </div>
   <div class="horses-grid" id="horses-grid"></div>
   <div class="select-footer">
-    <button class="btn-primary" id="select-btn" onclick="gotoBet()" disabled>Select a Horse to Continue</button>
+    <button class="btn-primary" id="select-btn" onclick="playButtonClick();gotoBet()" disabled>Select a Horse to Continue</button>
   </div>
 </div>
 
@@ -407,7 +407,7 @@
       <div class="bet-preview" id="bet-preview"></div>
     </div>
     <div style="display:flex;gap:12px;margin-top:8px;">
-      <button class="btn-secondary" onclick="gotoSelect()">← Back</button>
+      <button class="btn-secondary" onclick="playButtonClick();gotoSelect()">← Back</button>
       <button class="btn-primary" id="race-btn" onclick="startRace()">🏁 Start Race!</button>
     </div>
   </div>
@@ -504,8 +504,8 @@
     </div>
   </div>
   <div class="earnings-buttons">
-    <button class="btn-primary" onclick="playAgain()">🔄 Race Again</button>
-    <button class="btn-secondary" onclick="gotoStart()">🏠 Main Menu</button>
+    <button class="btn-primary" onclick="playButtonClick();playAgain()">🔄 Race Again</button>
+    <button class="btn-secondary" onclick="playButtonClick();gotoStart()">🏠 Main Menu</button>
   </div>
 </div>
 
@@ -840,6 +840,7 @@ function startRace() {
   if (!val || val <= 0 || val > balance) return;
   betAmount = val;
   balanceAtRaceStart = balance;
+  playCoinClink();
 
   const winnerIdx = chooseWinner();
   const finishOrder = horses.map((h, i) => ({ i, score: Math.random() + (i === winnerIdx ? 2.5 : (11 - h.odds) * 0.08) }))
@@ -871,6 +872,9 @@ function startRace() {
   winner = raceHorses.find(h => h.isWinner);
   previousStageLeaderId = null;
   initRaceAudio();
+  // Quack if there's a duck in the field
+  const hasDuck = raceHorses.some(h => h.spriteKey === 'duck1');
+  if (hasDuck) setTimeout(playQuack, 300);
   playCallToPost();
   runRaceStage(0);
 }
@@ -1010,16 +1014,236 @@ function generateRaceCaption(stageIndex) {
     : `${leader.name} for the wire — ${second.name} swinging wide! ${playerText}`;
 }
 
-function initRaceAudio() {
-  if (!audioEnabled) return;
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+
+function getAudioCtx() {
+  if (!audioEnabled) return null;
   try {
     if (!raceAudio) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
+      if (!AudioCtx) return null;
       raceAudio = { ctx: new AudioCtx() };
     }
     if (raceAudio.ctx.state === 'suspended') raceAudio.ctx.resume();
-  } catch (e) {}
+    return raceAudio.ctx;
+  } catch (e) { return null; }
+}
+
+function initRaceAudio() { getAudioCtx(); }
+
+// Shared helper: schedule a single oscillator note
+function schedNote(ctx, type, freq, vol, startT, dur, freqEnd) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startT);
+  if (freqEnd !== undefined) osc.frequency.exponentialRampToValueAtTime(freqEnd, startT + dur);
+  gain.gain.setValueAtTime(0.0001, startT);
+  gain.gain.exponentialRampToValueAtTime(vol, startT + 0.012);
+  gain.gain.setValueAtTime(vol, startT + dur * 0.75);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startT + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(startT);
+  osc.stop(startT + dur + 0.05);
+}
+
+// --- Call to the Post bugle tune (First Call) ---
+// Notes: only C major triad tones, classic 34-note sequence
+// Frequencies in Hz: G3=196, C4=261.6, E4=329.6, G4=392, C5=523.3
+function playCallToPostBugle() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.1;
+  const q = 0.18; // quarter note duration (seconds) at ~85 BPM feel
+
+  // The classic "First Call" melody sequence
+  // Written as [freq, beats] pairs — each beat = q seconds
+  const melody = [
+    [196,  1], [261.6,1], [329.6,1], [392,  1], // G3 C4 E4 G4
+    [392,  1], [392,  1], [392,  2],             // G4 G4 G4(half)
+    [392,  1], [329.6,1], [261.6,1], [392,  1], // G4 E4 C4 G4
+    [392,  1], [261.6,1], [329.6,1], [392,  1], // G4 C4 E4 G4
+    [523.3,1], [523.3,1], [523.3,2],             // C5 C5 C5(half)
+    [523.3,1], [392,  1], [261.6,1], [392,  2], // C5 G4 C4 G4(half)
+    [261.6,1], [329.6,1], [392,  1], [523.3,2], // C4 E4 G4 C5(half)
+    [392,  1], [261.6,1], [196,  3],             // G4 C4 G3(dotted half)
+  ];
+
+  let cursor = t;
+  for (const [freq, beats] of melody) {
+    const dur = beats * q * 0.88; // slight staccato gap
+    schedNote(ctx, 'sawtooth', freq, 0.10, cursor, dur);
+    cursor += beats * q;
+  }
+}
+
+// --- Start gate bell (3 quick dings) ---
+function playStartBell() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    schedNote(ctx, 'square', 880 - i * 80, 0.14, now + i * 0.13, 0.18);
+  }
+}
+
+// --- Crowd cheer (win) ---
+function playCrowdCheer() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Layered noise bursts with rising pitch sweep
+  for (let layer = 0; layer < 4; layer++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const baseFreq = 180 + layer * 90;
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(baseFreq, now + layer * 0.06);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.8, now + layer * 0.06 + 1.8);
+    gain.gain.setValueAtTime(0.0001, now + layer * 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.07, now + layer * 0.06 + 0.08);
+    gain.gain.setValueAtTime(0.07, now + layer * 0.06 + 0.9);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + layer * 0.06 + 1.9);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + layer * 0.06);
+    osc.stop(now + layer * 0.06 + 2.0);
+  }
+  // High shimmer
+  schedNote(ctx, 'sine', 1200, 0.04, now + 0.1, 1.4, 2400);
+}
+
+// --- Sad trombone / groan (loss) ---
+function playSadTrombone() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Descending wah-wah slide: wah wah wah wahhhh
+  const notes = [
+    [466, 0.00, 0.22],
+    [415, 0.25, 0.22],
+    [370, 0.50, 0.22],
+    [311, 0.75, 0.90],
+  ];
+  for (const [freq, offset, dur] of notes) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, now + offset);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.88, now + offset + dur);
+    gain.gain.setValueAtTime(0.0001, now + offset);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + offset + 0.025);
+    gain.gain.setValueAtTime(0.13, now + offset + dur * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + offset);
+    osc.stop(now + offset + dur + 0.05);
+  }
+}
+
+// --- Coin clink (bet placed) ---
+function playCoinClink() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Two quick high metallic pings
+  for (let i = 0; i < 2; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2200 + i * 400, now + i * 0.07);
+    gain.gain.setValueAtTime(0.0001, now + i * 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.07 + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.18);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + i * 0.07);
+    osc.stop(now + i * 0.07 + 0.22);
+  }
+}
+
+// --- Duck quack ---
+function playQuack() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Two-part quack: rising then falling
+  for (let q = 0; q < 2; q++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    const startF = q === 0 ? 600 : 500;
+    const endF   = q === 0 ? 900 : 350;
+    osc.frequency.setValueAtTime(startF, now + q * 0.18);
+    osc.frequency.exponentialRampToValueAtTime(endF, now + q * 0.18 + 0.14);
+    gain.gain.setValueAtTime(0.0001, now + q * 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + q * 0.18 + 0.01);
+    gain.gain.setValueAtTime(0.13, now + q * 0.18 + 0.10);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + q * 0.18 + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + q * 0.18);
+    osc.stop(now + q * 0.18 + 0.18);
+  }
+}
+
+// --- Shovel scrape (muck mini-game) ---
+let muckScrapeTimer = null;
+function startShovelScrapeFx() {
+  const ctx = getAudioCtx();
+  if (!ctx || muckScrapeTimer) return;
+  muckScrapeTimer = setInterval(() => {
+    if (!muckState || !muckState.dragging) return;
+    const now = ctx.currentTime;
+    // Gritty scrape: filtered noise via rapid detuned oscillators
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(80 + Math.random() * 60 + i * 30, now + i * 0.03);
+      osc.frequency.exponentialRampToValueAtTime(50 + Math.random() * 40, now + i * 0.03 + 0.12);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + i * 0.03 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.03 + 0.13);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.03);
+      osc.stop(now + i * 0.03 + 0.16);
+    }
+  }, 140);
+}
+function stopShovelScrapeFx() {
+  if (muckScrapeTimer) { clearInterval(muckScrapeTimer); muckScrapeTimer = null; }
+}
+
+// --- Crowd murmur ambience (during race) ---
+function startCrowdMurmur() {
+  const ctx = getAudioCtx();
+  if (!ctx || (raceAudio && raceAudio.murmurTimer)) return;
+  raceAudio.murmurTimer = setInterval(() => {
+    if (document.hidden) return;
+    const now = ctx.currentTime;
+    // Soft babble: random low sine clusters
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(200 + Math.random() * 300, now + i * 0.08);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.012, now + i * 0.08 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.28 + Math.random() * 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.52);
+    }
+  }, 260);
+}
+
+// --- Button click UI sound ---
+function playButtonClick() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  schedNote(ctx, 'sine', 660, 0.06, now, 0.065);
+  schedNote(ctx, 'sine', 880, 0.03, now + 0.03, 0.05);
 }
 
 function speakCaption(text) {
@@ -1034,35 +1258,18 @@ function speakCaption(text) {
 }
 
 function playCallToPost() {
-  speakCaption('Call to post. The field is approaching the starting gate.');
-}
-
-function playStartBell() {
-  if (!raceAudio || !raceAudio.ctx) return;
-  const ctx = raceAudio.ctx;
-  const now = ctx.currentTime;
-  for (let i = 0; i < 3; i++) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(880 - i * 80, now + i * 0.12);
-    gain.gain.setValueAtTime(0.0001, now + i * 0.12);
-    gain.gain.exponentialRampToValueAtTime(0.14, now + i * 0.125);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.24);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now + i * 0.12);
-    osc.stop(now + i * 0.26);
-  }
+  playCallToPostBugle();
+  // Speak caption after bugle finishes (~6s)
+  setTimeout(() => speakCaption('Horses to the post!'), 6200);
 }
 
 function stopRaceAudio() {
-  try {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-  } catch (e) {}
-  if (raceAudio && raceAudio.gallopTimer) {
-    clearInterval(raceAudio.gallopTimer);
-    raceAudio.gallopTimer = null;
+  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+  if (raceAudio) {
+    if (raceAudio.gallopTimer)  { clearInterval(raceAudio.gallopTimer);  raceAudio.gallopTimer  = null; }
+    if (raceAudio.murmurTimer)  { clearInterval(raceAudio.murmurTimer);  raceAudio.murmurTimer  = null; }
   }
+  stopShovelScrapeFx();
 }
 
 function startGallopFx() {
@@ -1084,6 +1291,7 @@ function startGallopFx() {
       osc.stop(now + i * 0.24);
     }
   }, 380);
+  startCrowdMurmur();
 }
 
 function ordinal(n) {
@@ -1339,6 +1547,7 @@ function showFinish() {
   document.getElementById('winner-name').textContent = `${winner.name} Wins!`;
   const canvas = document.getElementById('winner-canvas');
   drawSpriteFrame(canvas, winner.spriteKey, 0);
+  if (winner.spriteKey === 'duck1') setTimeout(playQuack, 200);
 }
 
 // ============================================================
@@ -1382,6 +1591,7 @@ function showEarnings() {
   resultEl.style.color = won ? '#6fcf97' : '#EB5757';
 
   showScreen('earnings-screen');
+  if (won) playCrowdCheer(); else playSadTrombone();
 
   // Animate counter from balanceAtRaceStart → newBalance
   const el = document.getElementById('earnings-number');
@@ -1490,6 +1700,7 @@ function bindMuckEvents(canvas) {
     if (Math.hypot(dx, dy) < 80) {
       muckState.dragging = true;
       muckState.shovelPicked = true;
+      startShovelScrapeFx();
       e.preventDefault();
     }
   };
@@ -1510,7 +1721,7 @@ function bindMuckEvents(canvas) {
       e.preventDefault();
     }
   };
-  const up = () => { if (muckState) muckState.dragging = false; };
+  const up = () => { if (muckState) { muckState.dragging = false; stopShovelScrapeFx(); } };
   canvas.__muckHandlers = { down, move, up };
   canvas.addEventListener('mousedown', down);
   canvas.addEventListener('mousemove', move);
