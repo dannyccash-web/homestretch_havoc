@@ -39,8 +39,8 @@
     align-items: center;
     justify-content: center;
     background:
-      linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.65) 100%),
-      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><radialGradient id="sky" cx="50%25" cy="0%25" r="100%25"><stop offset="0%25" stop-color="%2387CEEB"/><stop offset="100%25" stop-color="%23D4A843"/></radialGradient></defs><rect width="800" height="400" fill="url(%23sky)"/><ellipse cx="150" cy="80" rx="80" ry="40" fill="white" opacity="0.8"/><ellipse cx="600" cy="60" rx="100" ry="45" fill="white" opacity="0.7"/><rect y="370" width="800" height="230" fill="%234A7C3F"/><rect y="320" width="800" height="70" fill="%236B8F5E"/><rect y="290" width="800" height="40" fill="%23967444"/><rect y="260" width="800" height="40" fill="%238B5E3C"/></svg>') center/cover no-repeat;
+      linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.55) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%231a6fa8'/%3E%3Cstop offset='55%25' stop-color='%2363b8e8'/%3E%3Cstop offset='100%25' stop-color='%23a8d8f0'/%3E%3C/linearGradient%3E%3ClinearGradient id='grass' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%235f944e'/%3E%3Cstop offset='100%25' stop-color='%23244f27'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='600' fill='url(%23sky)'/%3E%3Cellipse cx='130' cy='90' rx='60' ry='26' fill='white' opacity='0.92'/%3E%3Cellipse cx='100' cy='100' rx='40' ry='22' fill='white' opacity='0.92'/%3E%3Cellipse cx='165' cy='100' rx='42' ry='20' fill='white' opacity='0.92'/%3E%3Cellipse cx='140' cy='78' rx='36' ry='22' fill='white' opacity='0.88'/%3E%3Cellipse cx='520' cy='65' rx='75' ry='30' fill='white' opacity='0.88'/%3E%3Cellipse cx='480' cy='75' rx='48' ry='24' fill='white' opacity='0.88'/%3E%3Cellipse cx='560' cy='76' rx='50' ry='22' fill='white' opacity='0.88'/%3E%3Cellipse cx='525' cy='52' rx='44' ry='26' fill='white' opacity='0.84'/%3E%3Cellipse cx='730' cy='130' rx='52' ry='22' fill='white' opacity='0.72'/%3E%3Cellipse cx='705' cy='138' rx='34' ry='18' fill='white' opacity='0.72'/%3E%3Cellipse cx='755' cy='138' rx='36' ry='17' fill='white' opacity='0.72'/%3E%3Crect y='370' width='800' height='230' fill='url(%23grass)'/%3E%3C/svg%3E") center/cover no-repeat;
   }
 
   .start-title-wrapper { text-align: center; margin-bottom: 60px; animation: titleDrop 1s ease-out; }
@@ -365,11 +365,11 @@
     <h1 class="start-title">Homestretch<br><span class="title-line2">Havoc</span></h1>
     <div class="start-deco">
       <div class="start-deco-line"></div>
-      <span style="color:var(--gold);font-size:3.2rem;line-height:1;display:inline-block;transform:translateY(2px);">🐎</span>
+      <span style="color:var(--gold);font-size:4.8rem;line-height:1;display:inline-block;transform:translateY(2px) scaleX(-1);">🐎</span>
       <div class="start-deco-line"></div>
     </div>
   </div>
-  <button class="btn-start" onclick="gotoSelect()">POST TIME</button>
+  <button class="btn-start" onclick="gotoSelect()">PLACE YOUR BETS!</button>
   <div class="start-balance" id="start-balance-display"></div>
 </div>
 
@@ -821,13 +821,13 @@ function startRace() {
       animFrame: Math.floor(Math.random() * TOTAL_FRAMES),
       bobPhase: Math.random() * Math.PI * 2,
       stageTargets: [
-        Math.max(0.04, 0.12 - place * 0.004 + Math.random() * 0.018),
-        Math.max(0.16, 0.27 - place * 0.006 + Math.random() * 0.02),
-        Math.max(0.31, 0.42 - place * 0.008 + Math.random() * 0.022),
-        Math.max(0.47, 0.58 - place * 0.01 + Math.random() * 0.022),
-        Math.max(0.61, 0.74 - place * 0.014 + Math.random() * 0.024),
-        Math.max(0.77, 0.90 - place * 0.018 + Math.random() * 0.026),
-        Math.max(1.08, 1.32 - place * 0.055 + Math.random() * 0.03)
+        Math.max(0.02, 0.13 - place * 0.008 + Math.random() * 0.014),
+        Math.max(0.12, 0.30 - place * 0.014 + Math.random() * 0.016),
+        Math.max(0.26, 0.46 - place * 0.018 + Math.random() * 0.018),
+        Math.max(0.40, 0.63 - place * 0.022 + Math.random() * 0.018),
+        Math.max(0.54, 0.80 - place * 0.028 + Math.random() * 0.020),
+        Math.max(0.68, 0.97 - place * 0.034 + Math.random() * 0.022),
+        Math.max(1.05, 1.38 - place * 0.072 + Math.random() * 0.024)
       ]
     };
   });
@@ -857,7 +857,7 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen',
       canvasId: 'race-canvas',
       commentaryId: 'commentary-text',
-      duration: 7600,
+      duration: 9600,
       gateSequence: true
     },
     {
@@ -865,42 +865,42 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-2',
       canvasId: 'race-canvas-2',
       commentaryId: 'commentary-text-2',
-      duration: 5200
+      duration: 7200
     },
     {
       title: 'Settling stride',
       screenId: 'race-screen-3',
       canvasId: 'race-canvas-3',
       commentaryId: 'commentary-text-3',
-      duration: 5200
+      duration: 7200
     },
     {
       title: 'Down the backstretch',
       screenId: 'race-screen-4',
       canvasId: 'race-canvas-4',
       commentaryId: 'commentary-text-4',
-      duration: 5400
+      duration: 7400
     },
     {
       title: 'Midrace move',
       screenId: 'race-screen-5',
       canvasId: 'race-canvas-5',
       commentaryId: 'commentary-text-5',
-      duration: 5400
+      duration: 7400
     },
     {
       title: 'Top of the stretch',
       screenId: 'race-screen-6',
       canvasId: 'race-canvas-6',
       commentaryId: 'commentary-text-6',
-      duration: 5600
+      duration: 7600
     },
     {
       title: 'Final drive',
       screenId: 'race-screen-7',
       canvasId: 'race-canvas-7',
       commentaryId: 'commentary-text-7',
-      duration: 6200
+      duration: 8200
     }
   ][stageIndex];
 }
@@ -1116,7 +1116,20 @@ function runRaceStage(stageIndex) {
     }
 
     if (stageIndex === 6) {
-      const flX = finishX + HORSE_W * 0.6;
+      // Finish line slides in from the right: starts off-screen right, lands at finishX + HORSE_W*0.6
+      const flTarget = finishX + HORSE_W * 0.6;
+      const flSlideStart = 0.18; // pct when it starts arriving
+      const flSlideEnd = 0.48;   // pct when fully in place
+      let flX;
+      if (pct < flSlideStart) {
+        flX = W + 60; // off-screen right
+      } else if (pct < flSlideEnd) {
+        const sp = (pct - flSlideStart) / (flSlideEnd - flSlideStart);
+        const esp = 1 - Math.pow(1 - sp, 3); // ease-out cubic
+        flX = W + 60 + (flTarget - W - 60) * esp;
+      } else {
+        flX = flTarget;
+      }
       for (let y = trackTop + 30; y < trackTop + 30 + laneH * NUM_HORSES; y += 14) {
         const even = Math.floor((y - trackTop - 30) / 14) % 2 === 0;
         ctx.fillStyle = even ? '#fff' : '#222';
@@ -1217,7 +1230,10 @@ function runRaceStage(stageIndex) {
       const labelText = h.id === selectedHorse ? `★ ${h.name}` : h.name;
       ctx.font = 'bold 16px Oswald, sans-serif';
       const labelWidth = ctx.measureText(labelText).width + 20;
-      const labelX = Math.max(10, Math.min(x + HORSE_W / 2 - labelWidth / 2, W - labelWidth - 10));
+      // In final stage let labels follow horse off-screen; otherwise clamp to canvas edge
+      const labelX = stageIndex === 6
+        ? x + HORSE_W / 2 - labelWidth / 2
+        : Math.max(10, Math.min(x + HORSE_W / 2 - labelWidth / 2, W - labelWidth - 10));
       const labelY = Math.max(8, y - 28);
       ctx.fillStyle = h.id === selectedHorse ? 'rgba(201,149,42,0.95)' : 'rgba(0,0,0,0.72)';
       ctx.fillRect(labelX, labelY, labelWidth, 24);
@@ -1441,7 +1457,7 @@ function bindMuckEvents(canvas) {
         p.x < muckState.pileX + muckState.pileW * 0.5 &&
         p.y > muckState.pileY - muckState.pileH * 0.55 &&
         p.y < muckState.pileY + muckState.pileH * 0.25;
-      if (inPile) muckState.cleared = Math.min(1, muckState.cleared + 0.012);
+      if (inPile) muckState.cleared = Math.min(1, muckState.cleared + 0.006);
       e.preventDefault();
     }
   };
@@ -1575,7 +1591,7 @@ function loopMuck(now) {
   if (leftMs <= 0) {
     muckState.startedAt = performance.now() - 2500;
     muckState.duration = 2500;
-    muckState.cleared = Math.min(1, muckState.cleared + 0.18);
+    muckState.cleared = Math.min(1, muckState.cleared + 0.10);
   }
 
   muckAnimFrame = requestAnimationFrame(loopMuck);
