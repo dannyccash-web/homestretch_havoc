@@ -550,7 +550,16 @@ const SPRITE_PATHS = {
   horse9: "sprites/horse9.webp",
   horse10: "sprites/horse10.webp",
   horse11: "sprites/horse11.webp",
+  duck1: "sprites/duck1.webp",
 };
+
+// All 11 horse sprite keys — shuffled each race for equal distribution
+const ALL_HORSE_SPRITES = ["horse1","horse2","horse3","horse4","horse5","horse6","horse7","horse8","horse9","horse10","horse11"];
+
+// 1-in-50 chance of duck per slot, otherwise use the assigned horse sprite
+function pickSprite(horseKey) {
+  return Math.random() < 1/50 ? "duck1" : horseKey;
+}
 
 </script>
 
@@ -681,14 +690,41 @@ function gotoSelect() {
 
 function generateHorses() {
   const names = shuffle(HORSE_NAMES).slice(0, 8);
-  const spriteIdxs = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, 8);
+  // Shuffle all 11 horse sprites and take 8 — guarantees each horse used at most once, all equally likely
+  const spriteKeys = shuffle(ALL_HORSE_SPRITES).slice(0, 8);
   horses = names.map((name, i) => ({
     name, id: i,
     odds: Math.floor(Math.random() * 20) + 1,
-    spriteKey: `horse${spriteIdxs[i]}`,
+    spriteKey: pickSprite(spriteKeys[i]),
   }));
 }
 
+// Cache for white-knocked-out duck frames (keyed by frame index)
+const duckFrameCache = {};
+
+function drawSpriteToCtx(ctx, spriteKey, col, row, dx, dy, dw, dh) {
+  const img = spriteImages[spriteKey];
+  if (!img) return;
+  if (spriteKey === 'duck1') {
+    const frameKey = row * SPRITE_COLS + col;
+    if (!duckFrameCache[frameKey]) {
+      const oc = document.createElement('canvas');
+      oc.width = FRAME_W; oc.height = FRAME_H;
+      const oc2 = oc.getContext('2d');
+      oc2.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+      const id = oc2.getImageData(0, 0, FRAME_W, FRAME_H);
+      const d = id.data;
+      for (let p = 0; p < d.length; p += 4) {
+        if (d[p] > 220 && d[p+1] > 220 && d[p+2] > 220) d[p+3] = 0;
+      }
+      oc2.putImageData(id, 0, 0);
+      duckFrameCache[frameKey] = oc;
+    }
+    ctx.drawImage(duckFrameCache[frameKey], 0, 0, FRAME_W, FRAME_H, dx, dy, dw, dh);
+  } else {
+    ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh);
+  }
+}
 function drawSpriteFrame(canvas, spriteKey, frame) {
   const ctx = canvas.getContext('2d');
   const img = spriteImages[spriteKey];
@@ -696,7 +732,7 @@ function drawSpriteFrame(canvas, spriteKey, frame) {
   const col = frame % SPRITE_COLS;
   const row = Math.floor(frame / SPRITE_COLS);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height);
+  drawSpriteToCtx(ctx, spriteKey, col, row, 0, 0, canvas.width, canvas.height);
 }
 
 function renderHorseGrid() {
@@ -920,45 +956,58 @@ function generateRaceCaption(stageIndex) {
   const playerRank = projected.findIndex(h => h.id === selectedHorse) + 1;
   const leaderChanged = previousStageLeaderId !== null && leader.id !== previousStageLeaderId;
   const prevLeader = leaderChanged ? raceHorses.find(h => h.id === previousStageLeaderId) : null;
+  const isDuck = playerHorse.spriteKey === 'duck1';
 
-  let playerText = '';
-  if (playerRank === 1) playerText = `Your horse ${playerHorse.name} is right on top.`;
-  else if (playerRank === 2) playerText = `Your horse ${playerHorse.name} is stalking the leader in second.`;
-  else if (playerRank <= 4) playerText = `Your horse ${playerHorse.name} is sitting ${ordinal(playerRank)} and waiting for a move.`;
-  else if (playerRank === NUM_HORSES) playerText = `Your horse ${playerHorse.name} is last and needs a big rally.`;
-  else playerText = `Your horse ${playerHorse.name} is back in ${ordinal(playerRank)} for now.`;
+  const duckLines = [
+    `${playerHorse.name} is a DUCK. A literal duck. And somehow ${ordinal(playerRank)}.`,
+    `Stewards are confused. ${playerHorse.name} is quacking. Still ${ordinal(playerRank)} though.`,
+    `${playerHorse.name} — a duck — is sitting ${ordinal(playerRank)}. No one has answers.`,
+    `Veterinarians have been notified. ${playerHorse.name} is a duck in ${ordinal(playerRank)}.`,
+    `The crowd is baffled. ${playerHorse.name} is a duck running ${ordinal(playerRank)}.`,
+    `${playerHorse.name} waddles on. Currently ${ordinal(playerRank)}, somehow.`,
+    `Still a duck. Still ${ordinal(playerRank)}. We are all witnessing something.`,
+  ];
+
+  let playerText;
+  if (isDuck) {
+    playerText = duckLines[Math.min(stageIndex, duckLines.length - 1)];
+  } else if (playerRank === 1) playerText = `Your horse ${playerHorse.name} leads!`;
+  else if (playerRank === 2) playerText = `${playerHorse.name} is stalking the leader.`;
+  else if (playerRank <= 4) playerText = `${playerHorse.name} lurks in ${ordinal(playerRank)}.`;
+  else if (playerRank === projected.length) playerText = `${playerHorse.name} is LAST. Yikes.`;
+  else playerText = `${playerHorse.name} is back in ${ordinal(playerRank)}.`;
 
   if (stageIndex === 0) {
-    return `The field is walking toward the gate for the call to post. ${leader.name} looks composed, and ${playerText}`;
+    return `${leader.name} to the gate. ${trailer.name} looks lost. ${playerText}`;
   }
   if (stageIndex === 1) {
     return leaderChanged
-      ? `${leader.name} explodes out of the gate and snatches the lead from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is already at the back. ${playerText}`
-      : `${leader.name} breaks sharply and shows the way. ${second.name} is right there, ${trailer.name} trails early, and ${playerText}`;
+      ? `${leader.name} rockets out! ${prevLeader?.name ?? second.name} already fading. ${playerText}`
+      : `${leader.name} leads, ${second.name} right there. ${trailer.name} already in trouble. ${playerText}`;
   }
   if (stageIndex === 2) {
     return leaderChanged
-      ? `${leader.name} has surged past ${prevLeader ? prevLeader.name : second.name} while the field settles into stride. ${trailer.name} is still last. ${playerText}`
-      : `${leader.name} keeps a narrow edge as they settle into rhythm. ${second.name} is tracking closely, ${trailer.name} remains last, and ${playerText}`;
+      ? `${leader.name} surges past ${prevLeader?.name ?? second.name}! ${playerText}`
+      : `${leader.name} holds the edge. ${trailer.name} is cooked. ${playerText}`;
   }
   if (stageIndex === 3) {
     return leaderChanged
-      ? `${leader.name} takes over down the backstretch, putting away ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is still last. ${playerText}`
-      : `${leader.name} continues to show the way down the backstretch with ${second.name} giving chase. ${trailer.name} remains last. ${playerText}`;
+      ? `${leader.name} takes over from ${prevLeader?.name ?? second.name}! ${playerText}`
+      : `${leader.name} still rolling. ${trailer.name} has given up spiritually. ${playerText}`;
   }
   if (stageIndex === 4) {
     return leaderChanged
-      ? `${leader.name} makes a bold midrace move and grabs the advantage from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is losing touch. ${playerText}`
-      : `${leader.name} still leads midway through the run, but ${second.name} is beginning to press. ${trailer.name} is dropping behind. ${playerText}`;
+      ? `${leader.name} makes a MOVE! Bye, ${prevLeader?.name ?? second.name}! ${playerText}`
+      : `${leader.name} won't quit. ${second.name} is coming! ${trailer.name} is just jogging now. ${playerText}`;
   }
   if (stageIndex === 5) {
     return leaderChanged
-      ? `${leader.name} strikes the front at the top of the stretch while ${prevLeader ? prevLeader.name : second.name} starts to weaken. ${trailer.name} is out the back. ${playerText}`
-      : `${leader.name} turns for home in front, with ${second.name} winding up in pursuit. ${trailer.name} is last. ${playerText}`;
+      ? `${leader.name} hits the front! ${prevLeader?.name ?? second.name} is done! ${playerText}`
+      : `${leader.name} turns for home. ${second.name} is desperate. ${playerText}`;
   }
   return leaderChanged
-    ? `${leader.name} kicks clear in the final drive after taking it away from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is out of it. ${playerText}`
-    : `${leader.name} leads them to the wire with ${second.name} trying one last push. ${trailer.name} is well behind. ${playerText}`;
+    ? `${leader.name} kicks clear! ${prevLeader?.name ?? second.name} gone! ${playerText}`
+    : `${leader.name} for the wire — ${second.name} swinging wide! ${playerText}`;
 }
 
 function initRaceAudio() {
@@ -1226,7 +1275,7 @@ function runRaceStage(stageIndex) {
 
       const y = trackTop + 34 + idx * laneH + (laneH - HORSE_H) / 2 + Math.sin(now / 130 + h.bobPhase) * bobAmp;
 
-      ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, x, y, HORSE_W, HORSE_H);
+      drawSpriteToCtx(ctx, h.spriteKey, col, row, x, y, HORSE_W, HORSE_H);
       const labelText = h.id === selectedHorse ? `★ ${h.name}` : h.name;
       ctx.font = 'bold 16px Oswald, sans-serif';
       const labelWidth = ctx.measureText(labelText).width + 20;
