@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homestretch Havoc</title>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5E6C8;
+    --gold: #C9952A;
+    --dark-brown: #2C1A0E;
+    --mid-brown: #5C3317;
+    --track-brown: #8B5E3C;
+    --grass-green: #4A7C3F;
+    --fence-white: #F0EDE4;
+    --accent-red: #9B2335;
+    --panel-green-light: rgba(95, 148, 78, 0.72);
+    --panel-green-dark: rgba(36, 79, 39, 0.9);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Oswald', sans-serif;
+    background: var(--dark-brown);
+    color: var(--cream);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+  .screen.active { display: flex; }
+
+  /* ===== START SCREEN ===== */
+  #start-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.65) 100%),
+      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><radialGradient id="sky" cx="50%25" cy="0%25" r="100%25"><stop offset="0%25" stop-color="%2387CEEB"/><stop offset="100%25" stop-color="%23D4A843"/></radialGradient></defs><rect width="800" height="400" fill="url(%23sky)"/><ellipse cx="150" cy="80" rx="80" ry="40" fill="white" opacity="0.8"/><ellipse cx="600" cy="60" rx="100" ry="45" fill="white" opacity="0.7"/><rect y="370" width="800" height="230" fill="%234A7C3F"/><rect y="320" width="800" height="70" fill="%236B8F5E"/><rect y="290" width="800" height="40" fill="%23967444"/><rect y="260" width="800" height="40" fill="%238B5E3C"/></svg>') center/cover no-repeat;
+  }
+
+  .start-title-wrapper { text-align: center; margin-bottom: 60px; animation: titleDrop 1s ease-out; }
+  @keyframes titleDrop { from { transform: translateY(-80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .start-subtitle { font-size: 1.1rem; letter-spacing: 0.6em; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; }
+  .start-title { font-family: 'Rye', serif; font-size: clamp(3.5rem, 8vw, 7rem); color: var(--cream); text-shadow: 4px 4px 0px var(--dark-brown), 0 0 60px rgba(201,149,42,0.6); line-height: 1; }
+  .title-line2 { color: var(--gold); display: block; }
+  .start-deco { display: flex; align-items: center; gap: 16px; margin-top: 16px; justify-content: center; }
+  .start-deco-line { height: 2px; width: 80px; background: linear-gradient(to right, transparent, var(--gold)); }
+  .start-deco-line:last-child { background: linear-gradient(to left, transparent, var(--gold)); }
+
+  .btn-start {
+    font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    background: linear-gradient(135deg, var(--gold) 0%, #E8B84B 50%, var(--gold) 100%);
+    color: var(--dark-brown); border: none; padding: 18px 60px; cursor: pointer;
+    clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+    transition: all 0.2s; animation: pulseBtn 2s ease-in-out infinite;
+  }
+  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  .btn-start:hover { transform: scale(1.08) !important; animation: none; }
+  .start-balance { margin-top: 24px; font-size: 0.95rem; color: rgba(245,230,200,0.7); letter-spacing: 0.15em; }
+
+  /* ===== SELECT SCREEN ===== */
+  #select-screen { flex-direction: column; background: linear-gradient(160deg, #1a0e06 0%, #2C1A0E 50%, #1a0e06 100%); }
+
+  .screen-header {
+    padding: 20px 40px 16px; border-bottom: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(0,0,0,0.3); flex-shrink: 0;
+  }
+  .screen-header h2 { font-family: 'Rye', serif; font-size: 2rem; color: var(--gold); text-shadow: 2px 2px 0 var(--dark-brown); }
+  .header-balance { font-size: 1.1rem; color: var(--cream); letter-spacing: 0.1em; }
+  .header-balance span { color: var(--gold); font-weight: 700; }
+
+  .horses-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 18px;
+    padding: 20px 32px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .horse-card {
+    background: linear-gradient(135deg, var(--panel-green-light) 0%, var(--panel-green-dark) 100%);
+    border: 2px solid rgba(201,149,42,0.3);
+    border-radius: 4px; padding: 12px; cursor: pointer;
+    transition: all 0.25s; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; position: relative; overflow: hidden;
+  }
+  .horse-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(201,149,42,0.2); }
+  .horse-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold), 0 8px 24px rgba(0,0,0,0.5), inset 0 0 30px rgba(201,149,42,0.15); }
+
+
+  /* FIXED: proportional sprite display */
+  .horse-sprite-wrap {
+    width: 100%;
+    height: 145px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .horse-canvas-thumb {
+    /* maintain aspect ratio 384:256 = 3:2 */
+    max-width: 100%;
+    max-height: 145px;
+    width: auto;
+    height: auto;
+    image-rendering: pixelated;
+    display: block;
+  }
+
+  .horse-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .horse-odds {
+    font-size: 1.1rem;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .select-footer { padding: 14px 32px; display: flex; justify-content: center; flex-shrink: 0; border-top: 1px solid rgba(201,149,42,0.3); }
+
+  /* ===== BET SCREEN ===== */
+  #bet-screen { flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(160deg, #1a0e06 0%, #2C1A0E 100%); gap: 32px; }
+  .bet-title { font-family: 'Rye', serif; font-size: 2.5rem; color: var(--gold); text-shadow: 3px 3px 0 var(--dark-brown); text-align: center; }
+
+  .bet-card {
+    background: linear-gradient(135deg, var(--panel-green-light) 0%, var(--panel-green-dark) 100%);
+    border: 2px solid var(--gold); border-radius: 4px; padding: 32px 48px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    min-width: 420px; box-shadow: 0 16px 60px rgba(0,0,0,0.6);
+  }
+
+  .bet-horse-display { display: flex; align-items: center; gap: 24px; }
+  .bet-horse-canvas { width: 200px; height: 133px; image-rendering: pixelated; }
+  .bet-horse-info { display: flex; flex-direction: column; gap: 8px; }
+  .bet-horse-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; color: var(--cream); }
+  .bet-horse-detail { font-size: 1rem; color: rgba(245,230,200,0.7); letter-spacing: 0.05em; }
+  .bet-horse-detail strong { color: var(--gold); }
+
+  .bet-divider { width: 100%; height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+
+  .bet-form { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+  .bet-label { font-size: 0.85rem; letter-spacing: 0.2em; color: rgba(245,230,200,0.7); text-transform: uppercase; }
+
+  .bet-input-wrap { position: relative; display: flex; align-items: center; }
+  .bet-dollar { position: absolute; left: 14px; font-size: 1.2rem; color: var(--gold); font-weight: 700; }
+  .bet-input {
+    background: rgba(0,0,0,0.4); border: 2px solid rgba(201,149,42,0.5);
+    color: var(--cream); font-family: 'Oswald', sans-serif; font-size: 1.8rem;
+    font-weight: 700; padding: 12px 20px 12px 36px; width: 220px;
+    text-align: center; outline: none; transition: border-color 0.2s; border-radius: 2px;
+  }
+  .bet-input:focus { border-color: var(--gold); }
+
+  /* removed "available" line — replaced with cleaner info */
+  .bet-bankroll-info {
+    font-size: 0.85rem;
+    color: rgba(245,230,200,0.55);
+    text-align: center;
+  }
+
+  .bet-preview { font-size: 0.9rem; color: rgba(245,230,200,0.8); text-align: center; min-height: 22px; }
+  .bet-preview .win-amt { color: #6fcf97; font-weight: 700; font-size: 1rem; }
+  .bet-preview .err { color: #EB5757; }
+
+  /* ===== SHARED BUTTONS ===== */
+  .btn-primary {
+    font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    background: linear-gradient(135deg, var(--gold) 0%, #E8B84B 50%, var(--gold) 100%);
+    color: var(--dark-brown); border: none; padding: 14px 48px; cursor: pointer;
+    clip-path: polygon(6px 0%, calc(100% - 6px) 0%, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0% calc(100% - 6px), 0% 6px);
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { transform: scale(1.05); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    font-family: 'Oswald', sans-serif; font-size: 0.9rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; background: transparent;
+    color: var(--gold); border: 2px solid var(--gold); padding: 10px 32px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: rgba(201,149,42,0.1); }
+
+  /* ===== RACE SCREEN ===== */
+  #race-screen, #race-screen-2, #race-screen-3, #race-screen-4, #race-screen-5, #race-screen-6, #race-screen-7 { flex-direction: column; background: var(--dark-brown); position: relative; }
+  #race-canvas, #race-canvas-2, #race-canvas-3, #race-canvas-4, #race-canvas-5, #race-canvas-6, #race-canvas-7 { width: 100%; height: 100%; display: block; }
+
+  .race-commentary {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 52px;
+    padding: 0 62px;
+    font-size: 1.22rem;
+    letter-spacing: 0.03em;
+    color: #FFFFFF;
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.38;
+    pointer-events: none;
+    background: transparent;
+    z-index: 3;
+  }
+  .commentary-icon { display: none; }
+  #commentary-text, #commentary-text-2, #commentary-text-3, #commentary-text-4, #commentary-text-5, #commentary-text-6, #commentary-text-7 { color: #FFFFFF; text-shadow: 0 2px 10px rgba(0,0,0,0.9); max-width: 1200px; }
+
+  /* ===== FINISH SCREEN ===== */
+  #finish-screen { flex-direction: column; align-items: center; justify-content: flex-start; background: radial-gradient(circle at top, #4b240d 0%, #2C1A0E 60%, #1a0e06 100%); }
+  #finish-canvas { width: 100%; flex: 1; display: block; }
+  .finish-banner {
+    margin-top: 14px;
+    text-align: center; font-family: 'Rye', serif;
+    font-size: 1.8rem; color: var(--gold); text-shadow: 2px 2px 0 var(--dark-brown); flex-shrink: 0;
+  }
+  .winner-frame {
+    margin-top: 18px;
+    width: min(920px, calc(100vw - 200px));
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    padding: 42px 36px 36px;
+    background: linear-gradient(135deg, var(--panel-green-light) 0%, var(--panel-green-dark) 100%);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+  .winner-subtext {
+    font-size: 0.95rem;
+    letter-spacing: 0.16em;
+    color: rgba(245,230,200,0.72);
+    text-transform: uppercase;
+  }
+  .audio-note {
+    position: absolute;
+    top: 18px;
+    right: 24px;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: rgba(245,230,200,0.65);
+    z-index: 4;
+    text-transform: uppercase;
+  }
+
+  /* ===== EARNINGS SCREEN ===== */
+  #earnings-screen { flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(160deg, #0e0806 0%, #2C1A0E 100%); gap: 32px; }
+  .earnings-title { font-family: 'Rye', serif; font-size: 2.8rem; text-align: center; text-shadow: 3px 3px 0 var(--dark-brown); }
+  .earnings-title.win { color: #6fcf97; }
+  .earnings-title.loss { color: #EB5757; }
+
+  .earnings-card {
+    background: linear-gradient(135deg, var(--panel-green-light) 0%, var(--panel-green-dark) 100%);
+    border: 2px solid var(--gold); border-radius: 4px; padding: 36px 56px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    min-width: 420px; box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+  }
+
+  .earnings-row { display: flex; justify-content: space-between; width: 100%; font-size: 1.05rem; letter-spacing: 0.04em; }
+  .earnings-row .label { color: rgba(245,230,200,0.7); }
+  .earnings-row .value { font-weight: 700; color: var(--cream); }
+
+  .earnings-total { width: 100%; padding-top: 20px; border-top: 1px solid rgba(201,149,42,0.4); text-align: center; }
+  .earnings-total-label { font-size: 0.85rem; letter-spacing: 0.2em; color: rgba(245,230,200,0.6); text-transform: uppercase; margin-bottom: 8px; }
+  .earnings-number { font-family: 'Oswald', sans-serif; font-size: 3.5rem; font-weight: 700; }
+  .earnings-number.counting { color: var(--gold); }
+  .earnings-number.final-win { color: #6fcf97; }
+  .earnings-number.final-loss { color: #EB5757; }
+
+  .earnings-buttons { display: flex; gap: 16px; }
+
+
+  /* ===== BROKE / MUCK STALLS ===== */
+  #broke-screen, #muck-screen, #muck-earned-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0f120d 0%, #233a1f 45%, #87b9e6 45%, #87b9e6 100%);
+    gap: 22px;
+  }
+  .broke-card, .muck-earned-card {
+    background: linear-gradient(135deg, rgba(95, 148, 78, 0.88) 0%, rgba(36, 79, 39, 0.94) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    padding: 34px 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    min-width: 360px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  }
+  .broke-title, .muck-earned-title {
+    font-family: 'Rye', serif;
+    font-size: 2.4rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--dark-brown);
+    text-align: center;
+  }
+  .broke-copy, .muck-earned-copy {
+    font-size: 1rem;
+    color: var(--cream);
+    text-align: center;
+    max-width: 520px;
+  }
+  .muck-wrap {
+    width: min(1100px, calc(100vw - 70px));
+    height: min(700px, calc(100vh - 120px));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+  }
+  .muck-ui {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--cream);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+  }
+  #muck-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 2px solid rgba(44,26,14,0.6);
+    border-radius: 8px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+    cursor: crosshair;
+    background: #87b9e6;
+  }
+
+
+  /* ===== LOADING ===== */
+  #loading-screen { flex-direction: column; align-items: center; justify-content: center; background: var(--dark-brown); gap: 24px; }
+  .loading-text { font-family: 'Rye', serif; font-size: 2rem; color: var(--gold); }
+  .loading-bar-wrap { width: 300px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+  .loading-bar { height: 100%; background: linear-gradient(to right, var(--gold), #E8B84B); width: 0%; animation: loadFill 2s ease-out forwards; border-radius: 4px; }
+  @keyframes loadFill { to { width: 100%; } }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen" class="screen active">
+  <div class="loading-text">Homestretch Havoc</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div style="color:rgba(245,230,200,0.5);font-size:0.85rem;letter-spacing:0.15em;">LOADING HORSES...</div>
+</div>
+
+<!-- START -->
+<div id="start-screen" class="screen">
+  <div class="start-title-wrapper">
+    <div class="start-subtitle">★ Welcome to ★</div>
+    <h1 class="start-title">Homestretch<br><span class="title-line2">Havoc</span></h1>
+    <div class="start-deco">
+      <div class="start-deco-line"></div>
+      <span style="color:var(--gold);font-size:3.2rem;line-height:1;display:inline-block;transform:translateY(2px);">🐎</span>
+      <div class="start-deco-line"></div>
+    </div>
+  </div>
+  <button class="btn-start" onclick="gotoSelect()">POST TIME</button>
+  <div class="start-balance" id="start-balance-display"></div>
+</div>
+
+<!-- HORSE SELECT -->
+<div id="select-screen" class="screen">
+  <div class="screen-header">
+    <h2>Choose Your Horse</h2>
+    <div class="header-balance">Bankroll: <span id="select-balance">$500</span></div>
+  </div>
+  <div class="horses-grid" id="horses-grid"></div>
+  <div class="select-footer">
+    <button class="btn-primary" id="select-btn" onclick="gotoBet()" disabled>Select a Horse to Continue</button>
+  </div>
+</div>
+
+<!-- BET -->
+<div id="bet-screen" class="screen">
+  <div class="bet-title">Place Your Wager</div>
+  <div class="bet-card">
+    <div class="bet-horse-display">
+      <canvas class="bet-horse-canvas" id="bet-canvas" width="200" height="133"></canvas>
+      <div class="bet-horse-info">
+        <div class="bet-horse-name" id="bet-horse-name">—</div>
+                <div class="bet-horse-detail">Odds: <strong id="bet-horse-odds">—</strong></div>
+      </div>
+    </div>
+    <div class="bet-divider"></div>
+    <div class="bet-form">
+      <div class="bet-label">Your Wager</div>
+      <div class="bet-input-wrap">
+        <span class="bet-dollar">$</span>
+        <input class="bet-input" id="bet-amount" type="number" min="1" value="10" oninput="updateBetPreview()">
+      </div>
+      <div class="bet-bankroll-info" id="bet-bankroll-info"></div>
+      <div class="bet-preview" id="bet-preview"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="btn-secondary" onclick="gotoSelect()">← Back</button>
+      <button class="btn-primary" id="race-btn" onclick="startRace()">🏁 Start Race!</button>
+    </div>
+  </div>
+</div>
+
+<!-- RACE -->
+<div id="race-screen" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text">Walking to the gate for the call to post...</span>
+  </div>
+</div>
+
+<div id="race-screen-2" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-2"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-2">They break from the gate...</span>
+  </div>
+</div>
+
+<div id="race-screen-3" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-3"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-3">Settling into stride...</span>
+  </div>
+</div>
+
+<div id="race-screen-4" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-4"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-4">Around the far turn...</span>
+  </div>
+</div>
+
+<div id="race-screen-5" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-5"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-5">Driving for the wire...</span>
+  </div>
+</div>
+
+<div id="race-screen-6" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-6"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-6">Top of the stretch...</span>
+  </div>
+</div>
+
+<div id="race-screen-7" class="screen">
+  <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
+  <canvas id="race-canvas-7"></canvas>
+  <div class="race-commentary">
+    <span class="commentary-icon">📢</span>
+    <span id="commentary-text-7">Final strides to the wire...</span>
+  </div>
+</div>
+
+<!-- WINNER -->
+<div id="finish-screen" class="screen">
+  <div class="bet-title finish-banner" id="finish-banner">🏆 Winning Horse</div>
+  <div class="winner-frame">
+    <canvas id="winner-canvas" width="260" height="173" style="width:260px;height:173px;image-rendering:pixelated;"></canvas>
+    <div style="text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;">
+      <div id="winner-name" style="font-family:'Rye', serif;font-size:2.1rem;color:var(--gold);">Winner</div>
+      <div class="winner-subtext">Tap next to continue to your results</div>
+    </div>
+    <button class="btn-primary" onclick="showEarnings()">Next</button>
+  </div>
+</div>
+
+<!-- EARNINGS -->
+<div id="earnings-screen" class="screen">
+  <div class="earnings-title" id="earnings-title">Results</div>
+  <div class="earnings-card">
+    <div class="earnings-row"><span class="label">Started With</span><span class="value" id="earn-started">$500</span></div>
+    <div class="earnings-row"><span class="label">Your Horse</span><span class="value" id="earn-horse">—</span></div>
+    <div class="earnings-row"><span class="label">Wager</span><span class="value" id="earn-wager">$0</span></div>
+    <div class="earnings-row"><span class="label">Result</span><span class="value" id="earn-result">—</span></div>
+    <div class="earnings-total">
+      <div class="earnings-total-label">New Balance</div>
+      <div class="earnings-number counting" id="earnings-number">$500</div>
+    </div>
+  </div>
+  <div class="earnings-buttons">
+    <button class="btn-primary" onclick="playAgain()">🔄 Race Again</button>
+    <button class="btn-secondary" onclick="gotoStart()">🏠 Main Menu</button>
+  </div>
+</div>
+
+
+<!-- BROKE -->
+<div id="broke-screen" class="screen">
+  <div class="broke-card">
+    <div class="broke-title">You're broke!</div>
+    <div class="broke-copy">No bankroll, no bet. Time to do the dirty work and earn another $10.</div>
+    <button class="btn-primary" onclick="startMuckStalls()">Muck the stalls</button>
+    <button class="btn-secondary" onclick="gotoStart()">← Main Menu</button>
+  </div>
+</div>
+
+<!-- MUCK STALLS -->
+<div id="muck-screen" class="screen">
+  <div class="muck-wrap">
+    <div class="muck-ui">
+      <div id="muck-status">Click the shovel, then scrub the manure pile.</div>
+      <div id="muck-timer">Time: 10.0</div>
+    </div>
+    <canvas id="muck-canvas"></canvas>
+  </div>
+</div>
+
+<!-- MUCK EARNED -->
+<div id="muck-earned-screen" class="screen">
+  <div class="muck-earned-card">
+    <div class="muck-earned-title">You earned $10!</div>
+    <div class="muck-earned-copy">Fresh bankroll. Back to the races.</div>
+    <button class="btn-primary" onclick="finishMuckStalls()">Play again</button>
+  </div>
+</div>
+
+
+<!-- SPRITES INJECTED BELOW -->
+<script>
+const SPRITE_DATA = {
+  horse1: "hh_assets/horse1.png",
+  horse2: "hh_assets/horse2.png",
+  horse3: "hh_assets/horse3.png",
+  horse4: "hh_assets/horse4.png",
+  horse5: "hh_assets/horse5.png",
+  horse6: "hh_assets/horse6.png",
+  horse7: "hh_assets/horse7.png",
+  horse8: "hh_assets/horse8.png",
+  horse9: "hh_assets/horse9.png",
+  horse10: "hh_assets/horse10.png",
+  horse11: "hh_assets/horse11.png"
+};
+
+</script>
+
+<script>
+// ============================================================
+// HORSE NAMES
+// ============================================================
+const HORSE_NAMES = [
+  "Papa's Mustache","Snackrifice","Hoofhearted","Sir Snacksalot","Marely Legal",
+  "Gallopagos","Neighsayer","Turboferret","Whinnyford","Oatzilla",
+  "Scrumbucket","Trottertot","Haywire","Fastidious","Saddlepuff",
+  "Blinkbonk","Mudwink","Wigglepost","Crumbquest","Zoomlet",
+  "Nibblesworth","Derby Doodle","Cantorlot","Banterhoof","Snortstorm",
+  "Ploprocket","Fancy Rumpus","Giddyupcake","Taterdash","Clipclopify",
+  "Mister Maybe","Oopsie Daisy","Jolly Stampede","Hiccup Jack","Gallumph",
+  "Rufflebreeze","Sir Gallops","Oatquake","Muffinbolt","Pranceylvania",
+  "Trotskylark","Mayhem Mint","Chucklebred","Sneezelightning","Baron von Zoom",
+  "Wobblecharge","Sassaflash","Noodlecharger","Derbygoblin","Gravy Comet",
+  "Velocitater","Pudding Strike","Gallopjack","Neighpalm","Honkchester",
+  "Bopalong","Butterthunder","Tiz a Giggle","Crasheroo","Glitterhoof",
+  "Fumblebee","Doodlecannon","Snack Baron","Toebeans","Clatterdash",
+  "Marshmallow Fang","Skedaddle","Bonkador","Mirthquake","Potato Current",
+  "Razzlepony","Silly Missile","Brisket","Zoomchester","Pompom Fury",
+  "Lord Oats","Hecklepenny","Quackspur","Whoa Nellie","Jamboree Jet",
+  "Chompion","Gallopoodle","Snickerflash","Wigglewire","Oatrageous",
+  "Picklesprint","Thundernugget","Cantankeray","Grin Reaper","Dazzlegrit",
+  "Rumorhasit","Sassy Laps","Mooch Rocket","Bananaglory","Cinder Comet",
+  "Velvet Stampede","Haymaker Jane","Racetrack Rascal","Lucky Lantern","Copper Carousel"
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let balance = 500;
+let horses = [];
+let selectedHorse = null;
+let betAmount = 10;
+let raceHorses = [];
+let winner = null;
+let previousStageLeaderId = null;
+let audioEnabled = true;
+let raceAudio = null;
+let currentSpeech = null;
+let spriteImages = {};
+let animFrame = null;
+let balanceAtRaceStart = 500; // snapshot before race
+let spriteFrameMeta = {};
+let muckAnimFrame = null;
+let muckGame = {
+  active: false,
+  timer: 10,
+  manureLeft: 1,
+  shovelPicked: false,
+  scrubbing: false,
+  shovelX: 0,
+  shovelY: 0,
+  manureCenterX: 0,
+  manureCenterY: 0
+};
+
+// Sprite sheet: 4 cols x 4 rows = 16 frames, each frame 384x256
+const SPRITE_COLS = 4;
+const SPRITE_ROWS = 4;
+const FRAME_W = 384;
+const FRAME_H = 256;
+const TOTAL_FRAMES = 16;
+
+const HORSE_W = 110;
+const HORSE_H = 73;
+const NUM_HORSES = 8;
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = function() {
+  balance = 500;
+  balanceAtRaceStart = 500;
+
+  const keys = Object.keys(SPRITE_DATA);
+  let finished = 0;
+  let startShown = false;
+
+  const finishBoot = () => {
+    if (startShown) return;
+    startShown = true;
+    document.getElementById('start-balance-display').textContent = `Your current bankroll: $${balance.toFixed(2)}`;
+    showScreen('start-screen');
+  };
+
+  // Never let sprite loading trap the player on the loading screen.
+  setTimeout(finishBoot, 1800);
+
+  keys.forEach(key => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        spriteFrameMeta[key] = analyzeSpriteFrames(img);
+      } catch (err) {
+        console.warn('Sprite analysis failed for', key, err);
+        spriteFrameMeta[key] = [];
+      }
+      finished++;
+      if (finished === keys.length) setTimeout(finishBoot, 150);
+    };
+    img.onerror = () => {
+      console.warn('Failed to load sprite', key, SPRITE_DATA[key]);
+      spriteFrameMeta[key] = [];
+      finished++;
+      if (finished === keys.length) setTimeout(finishBoot, 150);
+    };
+    img.src = SPRITE_DATA[key];
+    spriteImages[key] = img;
+  });
+};
+
+
+function analyzeSpriteFrames(img) {
+  const meta = [];
+  const probe = document.createElement('canvas');
+  probe.width = FRAME_W;
+  probe.height = FRAME_H;
+  const pctx = probe.getContext('2d', { willReadFrequently: true });
+
+  for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
+    const col = frame % SPRITE_COLS;
+    const row = Math.floor(frame / SPRITE_COLS);
+    pctx.clearRect(0, 0, FRAME_W, FRAME_H);
+    pctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+    const data = pctx.getImageData(0, 0, FRAME_W, FRAME_H).data;
+
+    const corners = [
+      [0, 0], [FRAME_W - 1, 0], [0, FRAME_H - 1], [FRAME_W - 1, FRAME_H - 1]
+    ];
+    let bgR = 0, bgG = 0, bgB = 0;
+    corners.forEach(([x, y]) => {
+      const idx = (y * FRAME_W + x) * 4;
+      bgR += data[idx];
+      bgG += data[idx + 1];
+      bgB += data[idx + 2];
+    });
+    bgR /= corners.length; bgG /= corners.length; bgB /= corners.length;
+
+    let minX = FRAME_W, minY = FRAME_H, maxX = -1, maxY = -1;
+    for (let y = 0; y < FRAME_H; y++) {
+      for (let x = 0; x < FRAME_W; x++) {
+        const idx = (y * FRAME_W + x) * 4;
+        const a = data[idx + 3];
+        if (a < 20) continue;
+        const diff = Math.abs(data[idx] - bgR) + Math.abs(data[idx + 1] - bgG) + Math.abs(data[idx + 2] - bgB);
+        if (diff > 36) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX === -1) {
+      minX = 0; minY = 0; maxX = FRAME_W - 1; maxY = FRAME_H - 1;
+    }
+
+    meta.push({
+      minX, minY, maxX, maxY,
+      width: maxX - minX + 1,
+      height: maxY - minY + 1,
+      centerX: (minX + maxX) / 2,
+      footY: maxY
+    });
+  }
+
+  const avgCenterX = meta.reduce((sum, m) => sum + m.centerX, 0) / meta.length;
+  const avgFootY = meta.reduce((sum, m) => sum + m.footY, 0) / meta.length;
+  meta.forEach(m => {
+    m.offsetX = avgCenterX - m.centerX;
+    m.offsetY = avgFootY - m.footY;
+  });
+  return meta;
+}
+
+function renderHorseFrame(ctx, spriteKey, frame, dx, dy, dw, dh) {
+  const img = spriteImages[spriteKey];
+  if (!img || !img.complete) return;
+  const col = frame % SPRITE_COLS;
+  const row = Math.floor(frame / SPRITE_COLS);
+  const meta = (spriteFrameMeta[spriteKey] && spriteFrameMeta[spriteKey][frame]) || null;
+  if (!meta) {
+    ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh);
+    return;
+  }
+  const sx = col * FRAME_W + meta.minX;
+  const sy = row * FRAME_H + meta.minY;
+  const sw = meta.width;
+  const sh = meta.height;
+  const scaleX = dw / FRAME_W;
+  const scaleY = dh / FRAME_H;
+  const adjustedX = dx + meta.minX * scaleX + meta.offsetX * scaleX;
+  const adjustedY = dy + meta.minY * scaleY + meta.offsetY * scaleY;
+  const adjustedW = sw * scaleX;
+  const adjustedH = sh * scaleY;
+  ctx.drawImage(img, sx, sy, sw, sh, adjustedX, adjustedY, adjustedW, adjustedH);
+}
+
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function saveBalance() {
+  // Intentionally no-op. Bankroll should reset to $500 on a fresh page load.
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ============================================================
+// START SCREEN
+// ============================================================
+function gotoStart() {
+  stopRaceAudio();
+  muckGame.active = false;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (muckAnimFrame) { cancelAnimationFrame(muckAnimFrame); muckAnimFrame = null; }
+  document.getElementById('start-balance-display').textContent = `Your current bankroll: $${balance.toFixed(2)}`;
+  showScreen('start-screen');
+}
+
+// ============================================================
+// HORSE SELECT
+// ============================================================
+function gotoSelect() {
+  stopRaceAudio();
+  muckGame.active = false;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (muckAnimFrame) { cancelAnimationFrame(muckAnimFrame); muckAnimFrame = null; }
+  selectedHorse = null;
+  generateHorses();
+  renderHorseGrid();
+  document.getElementById('select-balance').textContent = '$' + balance.toFixed(2);
+  const btn = document.getElementById('select-btn');
+  btn.disabled = true;
+  btn.textContent = 'Select a Horse to Continue';
+  showScreen('select-screen');
+}
+
+function generateHorses() {
+  const names = shuffle(HORSE_NAMES).slice(0, 8);
+  const spriteIdxs = shuffle([1,2,3,4,5,6,7,8,9,10,11]).slice(0, 8);
+  horses = names.map((name, i) => ({
+    name, id: i,
+    odds: Math.floor(Math.random() * 10) + 1,
+    spriteKey: `horse${spriteIdxs[i]}`,
+  }));
+}
+
+function drawSpriteFrame(canvas, spriteKey, frame) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  renderHorseFrame(ctx, spriteKey, frame, 0, 0, canvas.width, canvas.height);
+}
+
+function renderHorseGrid() {
+  const grid = document.getElementById('horses-grid');
+  grid.innerHTML = '';
+  horses.forEach((h, i) => {
+    const card = document.createElement('div');
+    card.className = 'horse-card';
+    card.id = `hcard-${i}`;
+
+    // Sprite — draw on canvas with correct aspect ratio
+    const wrap = document.createElement('div');
+    wrap.className = 'horse-sprite-wrap';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = FRAME_W;   // 384
+    canvas.height = FRAME_H;  // 256  → natural 3:2 ratio
+    canvas.className = 'horse-canvas-thumb';
+    setTimeout(() => drawSpriteFrame(canvas, h.spriteKey, 0), 0);
+    wrap.appendChild(canvas);
+
+    const name = document.createElement('div');
+    name.className = 'horse-name';
+    name.textContent = h.name;
+
+    const oddsEl = document.createElement('div');
+    oddsEl.className = 'horse-odds';
+    oddsEl.textContent = `Odds: ${h.odds}:1`;
+
+    card.appendChild(wrap);
+    card.appendChild(name);
+    card.appendChild(oddsEl);
+    card.onclick = () => selectHorse(i);
+    grid.appendChild(card);
+  });
+}
+
+function selectHorse(idx) {
+  document.querySelectorAll('.horse-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`hcard-${idx}`).classList.add('selected');
+  selectedHorse = idx;
+  const btn = document.getElementById('select-btn');
+  btn.disabled = false;
+  btn.textContent = `Bet on ${horses[idx].name} →`;
+}
+
+// ============================================================
+// BET SCREEN
+// ============================================================
+function gotoBet() {
+  if (selectedHorse === null) return;
+  if (balance < 1) { showBrokeScreen(); return; }
+  const h = horses[selectedHorse];
+
+  const canvas = document.getElementById('bet-canvas');
+  setTimeout(() => drawSpriteFrame(canvas, h.spriteKey, 0), 0);
+
+  document.getElementById('bet-horse-name').textContent = h.name;
+  document.getElementById('bet-horse-odds').textContent = `${h.odds}:1`;
+  document.getElementById('bet-bankroll-info').textContent = `Bankroll: $${balance.toFixed(2)}`;
+
+  // Default wager = min(10, balance)
+  const defaultBet = Math.min(10, balance);
+  document.getElementById('bet-amount').value = defaultBet;
+  document.getElementById('bet-amount').max = balance;
+
+  updateBetPreview();
+  showScreen('bet-screen');
+}
+
+function updateBetPreview() {
+  const h = horses[selectedHorse];
+  const raw = document.getElementById('bet-amount').value;
+  const val = parseFloat(raw);
+  const preview = document.getElementById('bet-preview');
+  const raceBtn = document.getElementById('race-btn');
+
+  if (!val || val <= 0) {
+    preview.innerHTML = '<span class="err">Enter a wager amount.</span>';
+    raceBtn.disabled = true;
+    return;
+  }
+  if (val > balance) {
+    preview.innerHTML = `<span class="err">Exceeds your bankroll of $${balance.toFixed(2)}.</span>`;
+    raceBtn.disabled = true;
+    return;
+  }
+
+  betAmount = val;
+  const profit = (val * h.odds).toFixed(2);
+  preview.innerHTML = `Win at ${h.odds}:1 → <span class="win-amt">+$${profit} profit</span>`;
+  raceBtn.disabled = false;
+}
+
+// ============================================================
+// RACE
+// ============================================================
+
+// Race lasts ~65 seconds. Horses move on a "progress" 0→1 scale.
+// Positions oscillate (surge/fall back) but always trend forward.
+// The horse with the highest odds influence still wins sometimes.
+
+function startRace() {
+  if (balance < 1) { showBrokeScreen(); return; }
+  const val = parseFloat(document.getElementById('bet-amount').value);
+  if (!val || val <= 0 || val > balance) return;
+  betAmount = val;
+  balanceAtRaceStart = balance;
+
+  const winnerIdx = chooseWinner();
+  const finishOrder = horses.map((h, i) => ({ i, score: Math.random() + (i === winnerIdx ? 2.5 : (11 - h.odds) * 0.08) }))
+    .sort((a, b) => b.score - a.score)
+    .map((entry, idx) => ({ ...entry, place: idx + 1 }));
+
+  raceHorses = horses.map((h, i) => {
+    const place = finishOrder.find(x => x.i === i).place;
+    return {
+      ...h,
+      id: i,
+      place,
+      isWinner: i === winnerIdx,
+      progress: 0,
+      animFrame: Math.floor(Math.random() * TOTAL_FRAMES),
+      bobPhase: Math.random() * Math.PI * 2,
+      stageTargets: [
+        Math.max(0.04, 0.12 - place * 0.004 + Math.random() * 0.018),
+        Math.max(0.16, 0.27 - place * 0.006 + Math.random() * 0.02),
+        Math.max(0.31, 0.42 - place * 0.008 + Math.random() * 0.022),
+        Math.max(0.47, 0.58 - place * 0.01 + Math.random() * 0.022),
+        Math.max(0.61, 0.74 - place * 0.014 + Math.random() * 0.024),
+        Math.max(0.77, 0.90 - place * 0.018 + Math.random() * 0.026),
+        Math.max(1.22, 1.54 - place * 0.05 + Math.random() * 0.035)
+      ]
+    };
+  });
+
+  winner = raceHorses.find(h => h.isWinner);
+  previousStageLeaderId = null;
+  initRaceAudio();
+  playCallToPost();
+  runRaceStage(0);
+}
+
+function chooseWinner() {
+  const weights = horses.map(h => 12 - h.odds);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return 0;
+}
+
+function getStageCopy(stageIndex) {
+  return [
+    {
+      title: 'Call to post',
+      screenId: 'race-screen',
+      canvasId: 'race-canvas',
+      commentaryId: 'commentary-text',
+      bgTop: '#9cc7e8',
+      duration: 7600,
+      gateSequence: true
+    },
+    {
+      title: "And they're off!",
+      screenId: 'race-screen-2',
+      canvasId: 'race-canvas-2',
+      commentaryId: 'commentary-text-2',
+      bgTop: '#95c3e3',
+      duration: 5200
+    },
+    {
+      title: 'Settling stride',
+      screenId: 'race-screen-3',
+      canvasId: 'race-canvas-3',
+      commentaryId: 'commentary-text-3',
+      bgTop: '#8dbddf',
+      duration: 5200
+    },
+    {
+      title: 'Down the backstretch',
+      screenId: 'race-screen-4',
+      canvasId: 'race-canvas-4',
+      commentaryId: 'commentary-text-4',
+      bgTop: '#86b7da',
+      duration: 5400
+    },
+    {
+      title: 'Midrace move',
+      screenId: 'race-screen-5',
+      canvasId: 'race-canvas-5',
+      commentaryId: 'commentary-text-5',
+      bgTop: '#80b1d5',
+      duration: 5400
+    },
+    {
+      title: 'Top of the stretch',
+      screenId: 'race-screen-6',
+      canvasId: 'race-canvas-6',
+      commentaryId: 'commentary-text-6',
+      bgTop: '#78abd0',
+      duration: 5600
+    },
+    {
+      title: 'Final drive',
+      screenId: 'race-screen-7',
+      canvasId: 'race-canvas-7',
+      commentaryId: 'commentary-text-7',
+      bgTop: '#72a4ca',
+      duration: 6200
+    }
+  ][stageIndex];
+}
+
+function getProjectedRaceOrderForStage(stageIndex) {
+  return [...raceHorses]
+    .map(h => ({ ...h, projectedProgress: h.stageTargets[stageIndex] }))
+    .sort((a, b) => b.projectedProgress - a.projectedProgress);
+}
+
+function generateRaceCaption(stageIndex) {
+  const projected = getProjectedRaceOrderForStage(stageIndex);
+  const leader = projected[0];
+  const second = projected[1];
+  const trailer = projected[projected.length - 1];
+  const playerHorse = horses[selectedHorse];
+  const playerRank = projected.findIndex(h => h.id === selectedHorse) + 1;
+  const leaderChanged = previousStageLeaderId !== null && leader.id !== previousStageLeaderId;
+  const prevLeader = leaderChanged ? raceHorses.find(h => h.id === previousStageLeaderId) : null;
+
+  let playerText = '';
+  if (playerRank === 1) playerText = `Your horse ${playerHorse.name} is right on top.`;
+  else if (playerRank === 2) playerText = `Your horse ${playerHorse.name} is stalking the leader in second.`;
+  else if (playerRank <= 4) playerText = `Your horse ${playerHorse.name} is sitting ${ordinal(playerRank)} and waiting for a move.`;
+  else if (playerRank === NUM_HORSES) playerText = `Your horse ${playerHorse.name} is last and needs a big rally.`;
+  else playerText = `Your horse ${playerHorse.name} is back in ${ordinal(playerRank)} for now.`;
+
+  if (stageIndex === 0) {
+    return `The field is walking toward the gate for the call to post. ${leader.name} looks composed, and ${playerText}`;
+  }
+  if (stageIndex === 1) {
+    return leaderChanged
+      ? `${leader.name} explodes out of the gate and snatches the lead from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is already at the back. ${playerText}`
+      : `${leader.name} breaks sharply and shows the way. ${second.name} is right there, ${trailer.name} trails early, and ${playerText}`;
+  }
+  if (stageIndex === 2) {
+    return leaderChanged
+      ? `${leader.name} has surged past ${prevLeader ? prevLeader.name : second.name} while the field settles into stride. ${trailer.name} is still last. ${playerText}`
+      : `${leader.name} keeps a narrow edge as they settle into rhythm. ${second.name} is tracking closely, ${trailer.name} remains last, and ${playerText}`;
+  }
+  if (stageIndex === 3) {
+    return leaderChanged
+      ? `${leader.name} takes over down the backstretch, putting away ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is still last. ${playerText}`
+      : `${leader.name} continues to show the way down the backstretch with ${second.name} giving chase. ${trailer.name} remains last. ${playerText}`;
+  }
+  if (stageIndex === 4) {
+    return leaderChanged
+      ? `${leader.name} makes a bold midrace move and grabs the advantage from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is losing touch. ${playerText}`
+      : `${leader.name} still leads midway through the run, but ${second.name} is beginning to press. ${trailer.name} is dropping behind. ${playerText}`;
+  }
+  if (stageIndex === 5) {
+    return leaderChanged
+      ? `${leader.name} strikes the front at the top of the stretch while ${prevLeader ? prevLeader.name : second.name} starts to weaken. ${trailer.name} is out the back. ${playerText}`
+      : `${leader.name} turns for home in front, with ${second.name} winding up in pursuit. ${trailer.name} is last. ${playerText}`;
+  }
+  return leaderChanged
+    ? `${leader.name} kicks clear in the final drive after taking it away from ${prevLeader ? prevLeader.name : second.name}. ${trailer.name} is out of it. ${playerText}`
+    : `${leader.name} leads them to the wire with ${second.name} trying one last push. ${trailer.name} is well behind. ${playerText}`;
+}
+
+function initRaceAudio() {
+  if (!audioEnabled) return;
+  try {
+    if (!raceAudio) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      raceAudio = { ctx: new AudioCtx() };
+    }
+    if (raceAudio.ctx.state === 'suspended') raceAudio.ctx.resume();
+  } catch (e) {}
+}
+
+function speakCaption(text) {
+  if (!audioEnabled || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.0;
+  utter.pitch = 0.95;
+  utter.volume = 0.9;
+  currentSpeech = utter;
+  window.speechSynthesis.speak(utter);
+}
+
+function playCallToPost() {
+  speakCaption('Call to post. The field is approaching the starting gate.');
+}
+
+function playStartBell() {
+  if (!raceAudio || !raceAudio.ctx) return;
+  const ctx = raceAudio.ctx;
+  const now = ctx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880 - i * 80, now + i * 0.12);
+    gain.gain.setValueAtTime(0.0001, now + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.14, now + i * 0.125);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.24);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + i * 0.12);
+    osc.stop(now + i * 0.26);
+  }
+}
+
+function stopRaceAudio() {
+  try {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  } catch (e) {}
+  if (raceAudio && raceAudio.gallopTimer) {
+    clearInterval(raceAudio.gallopTimer);
+    raceAudio.gallopTimer = null;
+  }
+}
+
+function startGallopFx() {
+  if (!raceAudio || !raceAudio.ctx || raceAudio.gallopTimer) return;
+  const ctx = raceAudio.ctx;
+  raceAudio.gallopTimer = setInterval(() => {
+    if (document.hidden) return;
+    const now = ctx.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(90 - i * 10, now + i * 0.09);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.10);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.09);
+      osc.stop(now + i * 0.24);
+    }
+  }, 380);
+}
+
+function ordinal(n) {
+  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+  if (n % 10 === 1) return `${n}st`;
+  if (n % 10 === 2) return `${n}nd`;
+  if (n % 10 === 3) return `${n}rd`;
+  return `${n}th`;
+}
+
+function getSortedRaceHorses() {
+  return [...raceHorses].sort((a, b) => b.progress - a.progress);
+}
+function getRaceLeader() { return getSortedRaceHorses()[0]; }
+function getRaceSecond() { return getSortedRaceHorses()[1]; }
+function getRaceTrailer() { const s = getSortedRaceHorses(); return s[s.length - 1]; }
+function getHorseRank(idx) { return getSortedRaceHorses().findIndex(h => h.id === idx) + 1; }
+
+function runRaceStage(stageIndex) {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  const cfg = getStageCopy(stageIndex);
+  showScreen(cfg.screenId);
+
+  const canvas = document.getElementById(cfg.canvasId);
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  const trackTop = 44;
+  const laneH = Math.min((H - trackTop - 28) / NUM_HORSES, 82);
+  const startX = 50;
+  const finishX = W - 240;
+  const raceWidth = finishX - startX;
+
+  const startPositions = raceHorses.map(h => h.progress);
+  const targetPositions = raceHorses.map(h => h.stageTargets[stageIndex]);
+  const stageDuration = cfg.duration;
+  const captionEl = document.getElementById(cfg.commentaryId);
+  const captionText = generateRaceCaption(stageIndex);
+  captionEl.textContent = captionText;
+  captionEl.style.opacity = '1';
+  if (stageIndex > 0) speakCaption(captionText);
+
+  function drawScene(pct, now) {
+    ctx.clearRect(0, 0, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, cfg.bgTop);
+    bg.addColorStop(0.58, '#d3b06d');
+    bg.addColorStop(0.581, '#4A7C3F');
+    bg.addColorStop(1, '#386532');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#F0EDE4';
+    for (let i = 0; i < 4; i++) ctx.fillRect(0, trackTop + i * 7, W, 2);
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(0, trackTop + 30, W, laneH * NUM_HORSES + 10);
+
+    for (let i = 0; i < NUM_HORSES; i++) {
+      const y = trackTop + 34 + i * laneH;
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, y + laneH - 4);
+      ctx.lineTo(W, y + laneH - 4);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(startX, trackTop + 30);
+    ctx.lineTo(startX, trackTop + 30 + laneH * NUM_HORSES);
+    ctx.stroke();
+
+    if (stageIndex === 6) {
+      const flX = finishX + HORSE_W * 0.6;
+      for (let y = trackTop + 30; y < trackTop + 30 + laneH * NUM_HORSES; y += 14) {
+        const even = Math.floor((y - trackTop - 30) / 14) % 2 === 0;
+        ctx.fillStyle = even ? '#fff' : '#222';
+        ctx.fillRect(flX, y, 10, 7);
+        ctx.fillStyle = even ? '#222' : '#fff';
+        ctx.fillRect(flX + 10, y, 10, 7);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(flX + 5, trackTop - 2, 4, 34);
+      ctx.fillStyle = '#EB5757';
+      ctx.fillRect(flX + 5, trackTop - 2, 28, 16);
+    }
+
+    const gateX = startX + 86;
+    const stageIsGate = !!cfg.gateSequence;
+
+    if (stageIsGate) {
+      const gateAreaTop = trackTop + 30;
+      const gateAreaH = laneH * NUM_HORSES;
+      ctx.fillStyle = 'rgba(80,80,88,0.55)';
+      ctx.fillRect(gateX - 16, gateAreaTop - 6, 16, gateAreaH + 12);
+      ctx.fillStyle = 'rgba(130,130,138,0.88)';
+      ctx.fillRect(gateX, gateAreaTop - 4, 12, gateAreaH + 8);
+      for (let i = 0; i < NUM_HORSES; i++) {
+        const stallY = trackTop + 34 + i * laneH + 3;
+        ctx.strokeStyle = 'rgba(235,235,240,0.85)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(gateX - 54, stallY, 54, HORSE_H - 2);
+        const gateClosed = pct < 0.84;
+        if (gateClosed) {
+          ctx.strokeStyle = 'rgba(245,245,245,0.95)';
+          ctx.beginPath();
+          ctx.moveTo(gateX - 54, stallY);
+          ctx.lineTo(gateX, stallY + HORSE_H - 2);
+          ctx.moveTo(gateX - 54, stallY + HORSE_H - 2);
+          ctx.lineTo(gateX, stallY);
+          ctx.stroke();
+        }
+      }
+    }
+
+    raceHorses.forEach((h, idx) => {
+      const eased = pct < 0.5 ? 2 * pct * pct : 1 - Math.pow(-2 * pct + 2, 2) / 2;
+      h.progress = startPositions[idx] + (targetPositions[idx] - startPositions[idx]) * eased;
+      const walkEnd = 0.62;
+      const pauseEnd = 0.84;
+      if (stageIsGate) {
+        if (pct < walkEnd) h.animFrame = Math.floor((now / 145 + idx * 2) % TOTAL_FRAMES);
+        else if (pct < pauseEnd) h.animFrame = 3;
+        else h.animFrame = Math.floor((now / 82 + idx * 2) % TOTAL_FRAMES);
+      } else {
+        h.animFrame = Math.floor((now / 82 + idx * 2) % TOTAL_FRAMES);
+      }
+
+
+      let x = startX + h.progress * raceWidth;
+      let bobAmp = 1.6;
+      if (stageIsGate) {
+        
+        const walkPct = Math.min(pct / walkEnd, 1);
+        const stallInset = 52 + idx * 1.1;
+        const stallTargetX = gateX - stallInset;
+        const approachStart = Math.max(14, startX - 110 - idx * 16);
+        if (pct < walkEnd) {
+          const wp = walkPct < 0.5 ? 2 * walkPct * walkPct : 1 - Math.pow(-2 * walkPct + 2, 2) / 2;
+          x = approachStart + (stallTargetX - approachStart) * wp;
+          bobAmp = 0.8;
+        } else if (pct < pauseEnd) {
+          x = stallTargetX;
+          bobAmp = 0.18;
+        } else {
+          const breakPct = (pct - pauseEnd) / (1 - pauseEnd);
+          x = stallTargetX + (startX + h.progress * raceWidth - stallTargetX) * breakPct;
+          bobAmp = 1.4;
+        }
+      }
+
+      const y = trackTop + 34 + idx * laneH + (laneH - HORSE_H) / 2 + Math.sin(now / 130 + h.bobPhase) * bobAmp;
+
+      renderHorseFrame(ctx, h.spriteKey, h.animFrame, x, y, HORSE_W, HORSE_H);
+      const labelText = h.id === selectedHorse ? `★ ${h.name}` : h.name;
+      ctx.font = 'bold 16px Oswald, sans-serif';
+      const labelWidth = ctx.measureText(labelText).width + 20;
+      const labelX = Math.max(10, Math.min(x + HORSE_W / 2 - labelWidth / 2, W - labelWidth - 10));
+      const labelY = Math.max(8, y - 28);
+      ctx.fillStyle = h.id === selectedHorse ? 'rgba(201,149,42,0.95)' : 'rgba(0,0,0,0.72)';
+      ctx.fillRect(labelX, labelY, labelWidth, 24);
+      if (h.id === selectedHorse) {
+        ctx.strokeStyle = '#F5E6C8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(labelX, labelY, labelWidth, 24);
+      }
+      ctx.fillStyle = h.id === selectedHorse ? '#2C1A0E' : '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(labelText, labelX + labelWidth / 2, labelY + 13);
+      ctx.textBaseline = 'alphabetic';
+    });
+  }
+
+  const stageStart = performance.now();
+  function loop(now) {
+    const elapsed = now - stageStart;
+    const pct = Math.min(elapsed / stageDuration, 1);
+    drawScene(pct, now);
+
+    if (pct < 1) {
+      animFrame = requestAnimationFrame(loop);
+    } else {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+      previousStageLeaderId = getRaceLeader().id;
+      if (stageIndex === 0) { playStartBell(); startGallopFx(); }
+      if (stageIndex < 6) {
+        setTimeout(() => runRaceStage(stageIndex + 1), 700);
+      } else {
+        stopRaceAudio();
+        setTimeout(showFinish, 900);
+      }
+    }
+  }
+
+  animFrame = requestAnimationFrame(loop);
+}
+
+function showFinish() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  stopRaceAudio();
+  showScreen('finish-screen');
+  document.getElementById('finish-banner').textContent = '🏆 Winning Horse';
+  document.getElementById('winner-name').textContent = `${winner.name} Wins!`;
+  const canvas = document.getElementById('winner-canvas');
+  drawSpriteFrame(canvas, winner.spriteKey, 0);
+}
+
+// ============================================================
+// EARNINGS// ============================================================
+// EARNINGS — correct math, no phantom gains
+// ============================================================
+function showEarnings() {
+  stopRaceAudio();
+  const myHorse = horses[selectedHorse];
+  const won = (winner && winner.id === myHorse.id);
+
+  // balanceAtRaceStart was snapshotted before the race
+  let newBalance;
+  let resultText;
+  let changeAmt;
+
+  if (won) {
+    // Win: get back wager + (wager × odds) profit
+    changeAmt = betAmount * myHorse.odds;
+    newBalance = balanceAtRaceStart + changeAmt;
+    resultText = `Won +$${changeAmt.toFixed(2)} (${myHorse.odds}:1 odds on $${betAmount.toFixed(2)} bet)`;
+  } else {
+    // Loss: lose only what was wagered
+    changeAmt = betAmount;
+    newBalance = balanceAtRaceStart - changeAmt;
+    if (newBalance < 0) newBalance = 0;
+    resultText = `Lost -$${changeAmt.toFixed(2)}`;
+  }
+
+  balance = newBalance;
+  saveBalance();
+
+  document.getElementById('earnings-title').textContent = won ? '🏆 WINNER!' : '😔 Better Luck Next Time';
+  document.getElementById('earnings-title').className = 'earnings-title ' + (won ? 'win' : 'loss');
+  document.getElementById('earn-started').textContent = '$' + balanceAtRaceStart.toFixed(2);
+  document.getElementById('earn-horse').textContent = myHorse.name + (won ? ' 🏆' : (winner ? ` (${winner.name} won)` : ''));
+  document.getElementById('earn-wager').textContent = '$' + betAmount.toFixed(2);
+
+  const resultEl = document.getElementById('earn-result');
+  resultEl.textContent = resultText;
+  resultEl.style.color = won ? '#6fcf97' : '#EB5757';
+
+  showScreen('earnings-screen');
+
+  // Animate counter from balanceAtRaceStart → newBalance
+  const el = document.getElementById('earnings-number');
+  el.className = 'earnings-number counting';
+  const duration = 2200;
+  const start = performance.now();
+  const from = balanceAtRaceStart;
+  const to = newBalance;
+
+  function countAnim(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+    el.textContent = '$' + (from + (to - from) * eased).toFixed(2);
+    if (p < 1) {
+      requestAnimationFrame(countAnim);
+    } else {
+      el.textContent = '$' + to.toFixed(2);
+      el.className = 'earnings-number ' + (won ? 'final-win' : 'final-loss');
+    }
+  }
+  requestAnimationFrame(countAnim);
+}
+
+// ============================================================
+// NAV
+// ============================================================
+
+function showBrokeScreen() {
+  stopRaceAudio();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (muckAnimFrame) { cancelAnimationFrame(muckAnimFrame); muckAnimFrame = null; }
+  showScreen('broke-screen');
+}
+
+function startMuckStalls() {
+  stopRaceAudio();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  muckGame = {
+    active: true,
+    timer: 10,
+    manureLeft: 1,
+    shovelPicked: false,
+    scrubbing: false,
+    shovelX: 140,
+    shovelY: 440,
+    manureCenterX: 0,
+    manureCenterY: 0
+  };
+
+  showScreen('muck-screen');
+  const canvas = document.getElementById('muck-canvas');
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  attachMuckHandlers();
+  runMuckLoop();
+}
+
+function attachMuckHandlers() {
+  const canvas = document.getElementById('muck-canvas');
+  if (canvas.dataset.bound === 'yes') return;
+  canvas.dataset.bound = 'yes';
+
+  function getPos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left) * (canvas.width / rect.width),
+      y: (evt.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  canvas.addEventListener('pointerdown', evt => {
+    if (!muckGame.active) return;
+    const p = getPos(evt);
+    muckGame.shovelX = p.x;
+    muckGame.shovelY = p.y;
+    const shovelBox = { x: 110, y: canvas.height - 230, w: 130, h: 130 };
+    if (!muckGame.shovelPicked && p.x >= shovelBox.x && p.x <= shovelBox.x + shovelBox.w && p.y >= shovelBox.y && p.y <= shovelBox.y + shovelBox.h) {
+      muckGame.shovelPicked = true;
+      muckGame.scrubbing = true;
+      document.getElementById('muck-status').textContent = 'Scrub that manure pile down to nothing.';
+    } else if (muckGame.shovelPicked) {
+      muckGame.scrubbing = true;
+    }
+    canvas.setPointerCapture(evt.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', evt => {
+    if (!muckGame.active) return;
+    const p = getPos(evt);
+    muckGame.shovelX = p.x;
+    muckGame.shovelY = p.y;
+  });
+
+  function endScrub() {
+    muckGame.scrubbing = false;
+  }
+  canvas.addEventListener('pointerup', endScrub);
+  canvas.addEventListener('pointercancel', endScrub);
+  canvas.addEventListener('pointerleave', endScrub);
+}
+
+function drawMuckScene(ctx, W, H, dt) {
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+  sky.addColorStop(0, '#7db7ea');
+  sky.addColorStop(1, '#bfe0ff');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#78b958';
+  ctx.fillRect(0, H * 0.46, W, H * 0.54);
+  ctx.fillStyle = '#5a9440';
+  ctx.fillRect(0, H * 0.54, W, H * 0.46);
+
+  const barnW = W * 0.52;
+  const barnH = H * 0.48;
+  const barnX = W * 0.26;
+  const barnY = H * 0.19;
+  ctx.fillStyle = '#8c2f23';
+  ctx.fillRect(barnX, barnY + 70, barnW, barnH - 70);
+  ctx.beginPath();
+  ctx.moveTo(barnX - 26, barnY + 70);
+  ctx.lineTo(barnX + barnW / 2, barnY);
+  ctx.lineTo(barnX + barnW + 26, barnY + 70);
+  ctx.closePath();
+  ctx.fillStyle = '#6f1f18';
+  ctx.fill();
+
+  ctx.fillStyle = '#4f2418';
+  const doorW = barnW * 0.42;
+  const doorH = barnH * 0.58;
+  const doorX = barnX + (barnW - doorW) / 2;
+  const doorY = barnY + barnH - doorH;
+  ctx.fillRect(doorX, doorY, doorW, doorH);
+
+  ctx.fillStyle = '#7a4f28';
+  for (let i = 0; i < 6; i++) {
+    ctx.fillRect(doorX + i * (doorW / 6), doorY, 7, doorH);
+  }
+
+  const leftPile = doorX + doorW * 0.25;
+  const rightPile = doorX + doorW * 0.75;
+  const pileBaseY = doorY + doorH - 18;
+  const pileW = doorW * (0.55 + 0.28 * muckGame.manureLeft);
+  const pileH = doorH * (0.18 + 0.42 * muckGame.manureLeft);
+  muckGame.manureCenterX = (leftPile + rightPile) / 2;
+  muckGame.manureCenterY = pileBaseY - pileH * 0.45;
+
+  if (muckGame.scrubbing && muckGame.shovelPicked) {
+    const dx = muckGame.shovelX - muckGame.manureCenterX;
+    const dy = muckGame.shovelY - muckGame.manureCenterY;
+    const inside = (dx * dx) / Math.pow(pileW * 0.45, 2) + (dy * dy) / Math.pow(pileH * 0.55 + 1, 2) <= 1.3;
+    if (inside) {
+      muckGame.manureLeft = Math.max(0, muckGame.manureLeft - dt * 0.09);
+    }
+  }
+
+  if (muckGame.shovelPicked) {
+    muckGame.timer = Math.max(0, muckGame.timer - dt);
+  }
+  document.getElementById('muck-timer').textContent = `Time: ${muckGame.timer.toFixed(1)}`;
+
+  if (muckGame.manureLeft > 0.001) {
+    ctx.fillStyle = '#4a2b14';
+    ctx.beginPath();
+    ctx.ellipse(muckGame.manureCenterX, pileBaseY, pileW * 0.58, pileH * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#5e3416';
+    ctx.beginPath();
+    ctx.moveTo(muckGame.manureCenterX - pileW * 0.55, pileBaseY);
+    ctx.bezierCurveTo(
+      muckGame.manureCenterX - pileW * 0.38, pileBaseY - pileH * 0.9,
+      muckGame.manureCenterX + pileW * 0.18, pileBaseY - pileH,
+      muckGame.manureCenterX + pileW * 0.52, pileBaseY
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#6c3b17';
+    ctx.beginPath();
+    ctx.ellipse(muckGame.manureCenterX + pileW * 0.08, pileBaseY - pileH * 0.3, pileW * 0.22, pileH * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const shovelHomeX = 110;
+  const shovelHomeY = H - 230;
+  const shovelX = muckGame.shovelPicked ? muckGame.shovelX - 20 : shovelHomeX;
+  const shovelY = muckGame.shovelPicked ? muckGame.shovelY - 20 : shovelHomeY;
+
+  ctx.save();
+  ctx.translate(shovelX, shovelY);
+  ctx.rotate(muckGame.shovelPicked ? 0.45 : -0.55);
+  ctx.fillStyle = '#8b6a45';
+  ctx.fillRect(0, 0, 18, 130);
+  ctx.fillStyle = '#b7b7bc';
+  ctx.beginPath();
+  ctx.moveTo(-14, 130);
+  ctx.lineTo(32, 130);
+  ctx.lineTo(18, 168);
+  ctx.lineTo(0, 168);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(22, 20, 420, 46);
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 24px Oswald, sans-serif';
+  ctx.fillText('Muck the stalls', 40, 50);
+}
+
+function runMuckLoop() {
+  if (muckAnimFrame) { cancelAnimationFrame(muckAnimFrame); muckAnimFrame = null; }
+  const canvas = document.getElementById('muck-canvas');
+  const ctx = canvas.getContext('2d');
+  let last = performance.now();
+
+  function loop(now) {
+    if (!muckGame.active) return;
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    drawMuckScene(ctx, canvas.width, canvas.height, dt);
+
+    if (muckGame.manureLeft <= 0.001) {
+      muckGame.active = false;
+      balance += 10;
+      saveBalance();
+      setTimeout(() => showScreen('muck-earned-screen'), 250);
+      return;
+    }
+
+    if (muckGame.timer <= 0 && muckGame.manureLeft > 0.001) {
+      muckGame.active = false;
+      setTimeout(() => startMuckStalls(), 250);
+      return;
+    }
+
+    muckAnimFrame = requestAnimationFrame(loop);
+  }
+
+  muckAnimFrame = requestAnimationFrame(loop);
+}
+
+function finishMuckStalls() {
+  gotoSelect();
+}
+
+
+function playAgain() {
+  stopRaceAudio();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  gotoSelect();
+}
+</script>
+</body>
+</html>
