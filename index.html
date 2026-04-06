@@ -347,79 +347,7 @@
     cursor: crosshair;
   }
 
-  /* ===== MOBILE ===== */
-  @media (max-width: 600px) {
-    /* Side padding on key containers */
-    #start-screen { padding-left: 15px; padding-right: 15px; }
-
-    /* Start screen */
-    .btn-start { font-size: 1.1rem; padding: 15px 36px; }
-
-    /* Select screen header */
-    .screen-header { padding: 14px 15px 12px; }
-    .screen-header h2 { font-size: 1.4rem; }
-    .header-balance { font-size: 0.9rem; }
-
-    /* Horse grid: single column on mobile */
-    .horses-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: unset;
-      padding: 14px 15px;
-      gap: 12px;
-      overflow-y: auto;
-    }
-
-    /* Make cards horizontal / compact on mobile single-column */
-    .horse-card {
-      flex-direction: row;
-      padding: 10px 12px;
-      gap: 12px;
-      align-items: center;
-    }
-    .horse-sprite-wrap {
-      width: 80px;
-      height: 54px;
-      flex-shrink: 0;
-    }
-    .horse-canvas-thumb {
-      max-height: 54px;
-    }
-    .horse-name { font-size: 1rem; text-align: left; }
-    .horse-odds { font-size: 0.9rem; }
-
-    .select-footer { padding: 10px 15px; }
-    .btn-primary { font-size: 0.95rem; padding: 14px 24px; }
-    .btn-secondary { font-size: 0.8rem; padding: 9px 20px; }
-
-    /* Bet screen */
-    #bet-screen { padding-left: 15px; padding-right: 15px; gap: 18px; }
-    .bet-title { font-size: 1.8rem; }
-    .bet-card { min-width: unset; width: 100%; padding: 20px 16px; }
-    .bet-horse-display { flex-direction: column; gap: 12px; align-items: center; }
-    .bet-horse-name { font-size: 1.2rem; }
-    .bet-horse-detail { font-size: 0.85rem; }
-    .bet-input { font-size: 1.4rem; width: 180px; }
-
-    /* Earnings screen */
-    #earnings-screen { padding-left: 15px; padding-right: 15px; }
-    .earnings-title { font-size: 2rem; }
-    .earnings-card { min-width: unset; width: 100%; padding: 24px 16px; }
-    .earnings-number { font-size: 2.6rem; }
-
-    /* Broke / muck screens */
-    .broke-card, .muck-win-card { min-width: unset; width: 100%; padding: 24px 15px; }
-    .broke-title, .muck-win-title { font-size: 1.8rem; }
-    .broke-copy, .muck-win-copy { font-size: 0.95rem; }
-
-    /* Race commentary */
-    .race-commentary { padding: 0 15px; font-size: 1rem; }
-
-    /* Finish screen */
-    .winner-frame { width: calc(100vw - 30px); padding: 24px 15px 20px; }
-    .finish-banner { font-size: 1.3rem; }
-  }
-
-
+</style>
 </head>
 <body>
 
@@ -659,9 +587,7 @@ const HORSE_NAMES = [
   "Gallop Poll","Hecklepenny","Quackspur","Whoa Nellie","Jamboree Jet",
   "Chompion","Gallopoodle","Snickerflash","Wigglewire","Oatrageous",
   "Picklesprint","Thundernugget","Cantankeray","Grin Reaper","Biscuit Riot",
-  "Dazzlegrit","Rumorhasit","Sassy Laps","Mooch Rocket","Bananaglory",
-  "Floofington","Snoutmaster","Waddlechops","Noodlelegs","Baron Breeches",
-  "Wobblebottom","Prance Charming","Gallopalooza","Trotilda","Sir Loin of Beef"
+  "Dazzlegrit","Rumorhasit","Sassy Laps","Mooch Rocket","Bananaglory"
 ];
 
 // ============================================================
@@ -768,7 +694,7 @@ function generateHorses() {
   const spriteKeys = shuffle(ALL_HORSE_SPRITES).slice(0, 8);
   horses = names.map((name, i) => ({
     name, id: i,
-    odds: Math.floor(Math.random() * 19) + 2,
+    odds: Math.floor(Math.random() * 20) + 1,
     spriteKey: pickSprite(spriteKeys[i]),
   }));
 }
