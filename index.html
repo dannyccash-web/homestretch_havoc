@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2C1A0E">
+<meta name="format-detection" content="telephone=no">
 <title>Homestretch Havoc</title>
 <link href="https://fonts.googleapis.com/css2?family=Rye&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -21,14 +26,35 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
+  html, body {
     font-family: 'Oswald', sans-serif;
     background: var(--dark-brown);
     color: var(--cream);
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    overscroll-behavior: none;
+    touch-action: manipulation;
   }
+
+  body {
+    /* use dynamic viewport units so mobile browser chrome doesn't clip */
+    height: 100dvh;
+    width: 100vw;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Interactive elements still accept gestures */
+  input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+
+  button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
   .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
   .screen.active { display: flex; }
@@ -77,31 +103,45 @@
   .header-balance { font-size: 1.1rem; color: var(--cream); letter-spacing: 0.1em; }
   .header-balance span { color: var(--gold); font-weight: 700; }
 
+  /* Vertical stack — one horse per row on every viewport */
   .horses-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 18px;
-    padding: 20px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px clamp(14px, 4vw, 40px);
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
   }
 
   .horse-card {
     background: linear-gradient(135deg, var(--panel-green-light) 0%, var(--panel-green-dark) 100%);
     border: 2px solid rgba(201,149,42,0.3);
-    border-radius: 4px; padding: 12px; cursor: pointer;
-    transition: all 0.25s; display: flex; flex-direction: column;
-    align-items: center; gap: 10px; position: relative; overflow: hidden;
+    border-radius: 6px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  .horse-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(201,149,42,0.2); }
-  .horse-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold), 0 8px 24px rgba(0,0,0,0.5), inset 0 0 30px rgba(201,149,42,0.15); }
+  .horse-card:hover { border-color: var(--gold); box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 14px rgba(201,149,42,0.18); }
+  .horse-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold), 0 6px 20px rgba(0,0,0,0.5), inset 0 0 22px rgba(201,149,42,0.15); }
 
 
-  /* FIXED: proportional sprite display */
+  /* Sprite thumb — compact, locked aspect ratio (3:2) */
   .horse-sprite-wrap {
-    width: 100%;
-    height: 145px;
+    width: 108px;
+    height: 72px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -109,26 +149,36 @@
   }
 
   .horse-canvas-thumb {
-    /* maintain aspect ratio 384:256 = 3:2 */
     max-width: 100%;
-    max-height: 145px;
+    max-height: 100%;
     width: auto;
     height: auto;
     image-rendering: pixelated;
     display: block;
   }
 
+  .horse-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
   .horse-name {
     font-family: 'Playfair Display', serif;
-    font-size: 1.22rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--cream);
-    text-align: center;
-    line-height: 1.2;
+    text-align: left;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .horse-odds {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     color: var(--gold);
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -353,73 +403,88 @@
     #start-screen { padding-left: 15px; padding-right: 15px; }
 
     /* Start screen */
-    .btn-start { font-size: 1.1rem; padding: 15px 36px; }
+    .start-title-wrapper { margin-bottom: 32px; }
+    .start-subtitle { font-size: 0.85rem; letter-spacing: 0.4em; }
+    .start-deco span { font-size: 3.2rem !important; }
+    .start-deco-line { width: 48px; }
+    .btn-start { font-size: 1.05rem; padding: 14px 32px; letter-spacing: 0.15em; }
+    .start-balance { font-size: 0.8rem; }
 
     /* Select screen header */
-    .screen-header { padding: 14px 15px 12px; }
-    .screen-header h2 { font-size: 1.4rem; }
-    .header-balance { font-size: 0.9rem; }
+    .screen-header { padding: 12px 14px 10px; }
+    .screen-header h2 { font-size: 1.3rem; }
+    .header-balance { font-size: 0.85rem; }
 
-    /* Horse grid: single column on mobile */
-    .horses-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: unset;
-      padding: 14px 15px;
-      gap: 12px;
-      overflow-y: auto;
-    }
+    /* Horse grid — already a vertical stack for all sizes. Tighter spacing on mobile. */
+    .horses-grid { padding: 10px 12px; gap: 8px; }
+    .horse-card { padding: 8px 10px; gap: 10px; }
+    .horse-sprite-wrap { width: 86px; height: 57px; }
+    .horse-name { font-size: 1rem; }
+    .horse-odds { font-size: 0.85rem; }
 
-    /* Make cards horizontal / compact on mobile single-column */
-    .horse-card {
-      flex-direction: row;
-      padding: 10px 12px;
-      gap: 12px;
-      align-items: center;
-    }
-    .horse-sprite-wrap {
-      width: 80px;
-      height: 54px;
-      flex-shrink: 0;
-    }
-    .horse-canvas-thumb {
-      max-height: 54px;
-    }
-    .horse-name { font-size: 1rem; text-align: left; }
-    .horse-odds { font-size: 0.9rem; }
-
-    .select-footer { padding: 10px 15px; }
-    .btn-primary { font-size: 0.95rem; padding: 14px 24px; }
+    .select-footer { padding: 10px 12px; }
+    .btn-primary { font-size: 0.95rem; padding: 13px 22px; }
     .btn-secondary { font-size: 0.8rem; padding: 9px 20px; }
 
     /* Bet screen */
-    #bet-screen { padding-left: 15px; padding-right: 15px; gap: 18px; }
-    .bet-title { font-size: 1.8rem; }
-    .bet-card { min-width: unset; width: 100%; padding: 20px 16px; }
-    .bet-horse-display { flex-direction: column; gap: 12px; align-items: center; }
+    #bet-screen { padding: 14px 15px; gap: 14px; }
+    .bet-title { font-size: 1.6rem; }
+    .bet-card { min-width: unset; width: 100%; padding: 18px 14px; gap: 14px; }
+    .bet-horse-display { flex-direction: column; gap: 10px; align-items: center; }
+    .bet-horse-canvas { width: 170px; height: 113px; }
     .bet-horse-name { font-size: 1.2rem; }
     .bet-horse-detail { font-size: 0.85rem; }
-    .bet-input { font-size: 1.4rem; width: 180px; }
+    .bet-input { font-size: 1.3rem; width: 170px; padding: 10px 18px 10px 32px; }
 
     /* Earnings screen */
-    #earnings-screen { padding-left: 15px; padding-right: 15px; }
-    .earnings-title { font-size: 2rem; }
-    .earnings-card { min-width: unset; width: 100%; padding: 24px 16px; }
-    .earnings-number { font-size: 2.6rem; }
+    #earnings-screen { padding: 15px; gap: 18px; }
+    .earnings-title { font-size: 1.9rem; }
+    .earnings-card { min-width: unset; width: 100%; padding: 20px 14px; gap: 14px; }
+    .earnings-row { font-size: 0.95rem; }
+    .earnings-number { font-size: 2.4rem; }
+    .earnings-buttons { flex-direction: column; gap: 10px; width: 100%; }
+    .earnings-buttons .btn-primary,
+    .earnings-buttons .btn-secondary { width: 100%; }
 
     /* Broke / muck screens */
-    .broke-card, .muck-win-card { min-width: unset; width: 100%; padding: 24px 15px; }
-    .broke-title, .muck-win-title { font-size: 1.8rem; }
+    .broke-card, .muck-win-card { min-width: unset; width: calc(100vw - 30px); padding: 22px 15px; gap: 14px; }
+    .broke-title, .muck-win-title { font-size: 1.7rem; }
     .broke-copy, .muck-win-copy { font-size: 0.95rem; }
 
     /* Race commentary */
-    .race-commentary { padding: 0 15px; font-size: 1rem; }
+    .race-commentary {
+      padding: 0 12px 10px;
+      font-size: 0.95rem;
+      bottom: 10px;
+      min-height: 52px;
+      line-height: 1.3;
+    }
 
     /* Finish screen */
-    .winner-frame { width: calc(100vw - 30px); padding: 24px 15px 20px; }
-    .finish-banner { font-size: 1.3rem; }
+    .winner-frame { width: calc(100vw - 24px); padding: 20px 14px 18px; gap: 14px; margin-top: 10px; }
+    .finish-banner { font-size: 1.2rem; }
+    #winner-name { font-size: 1.5rem !important; }
+    .winner-subtext { font-size: 0.8rem !important; }
+
+    /* Muck timer/header */
+    .muck-ui { top: 10px; left: 12px; right: 12px; font-size: 0.85rem; }
+
+    /* Hide the secondary "audio note" label on tiny screens — it's clutter */
+    .audio-note { font-size: 0.65rem; top: 8px; right: 10px; opacity: 0.55; }
   }
 
+  /* Short screens (landscape phones) — avoid title pushing buttons off */
+  @media (max-height: 520px) and (orientation: landscape) {
+    .start-title-wrapper { margin-bottom: 16px; }
+    .start-title { font-size: clamp(2rem, 6vw, 3.6rem); }
+    .start-deco span { font-size: 2.5rem !important; }
+    .btn-start { padding: 10px 28px; font-size: 0.95rem; }
+    .start-balance { margin-top: 10px; font-size: 0.75rem; }
+    .screen-header { padding: 8px 14px; }
+    .screen-header h2 { font-size: 1.1rem; }
+  }
 
+</style>
 </head>
 <body>
 
@@ -473,7 +538,7 @@
       <div class="bet-label">Your Wager</div>
       <div class="bet-input-wrap">
         <span class="bet-dollar">$</span>
-        <input class="bet-input" id="bet-amount" type="number" min="1" value="10" oninput="updateBetPreview()">
+        <input class="bet-input" id="bet-amount" type="number" inputmode="decimal" pattern="[0-9]*" min="1" value="10" oninput="updateBetPreview()">
       </div>
       <div class="bet-bankroll-info" id="bet-bankroll-info"></div>
       <div class="bet-preview" id="bet-preview"></div>
@@ -489,9 +554,9 @@
 <div id="race-screen" class="screen">
   <div class="audio-note">Audio: call to post, race captions, and gallop fx</div>
   <canvas id="race-canvas"></canvas>
-  <div class="race-commentary">
+  <div class="race-commentary" id="race-commentary-wrap-1" style="display:none;">
     <span class="commentary-icon">📢</span>
-    <span id="commentary-text">Walking to the gate for the call to post...</span>
+    <span id="commentary-text"></span>
   </div>
 </div>
 
@@ -828,6 +893,9 @@ function renderHorseGrid() {
     setTimeout(() => drawSpriteFrame(canvas, h.spriteKey, 0), 0);
     wrap.appendChild(canvas);
 
+    const info = document.createElement('div');
+    info.className = 'horse-card-info';
+
     const name = document.createElement('div');
     name.className = 'horse-name';
     name.textContent = h.name;
@@ -836,9 +904,10 @@ function renderHorseGrid() {
     oddsEl.className = 'horse-odds';
     oddsEl.textContent = `Odds: ${h.odds}:1`;
 
+    info.appendChild(name);
+    info.appendChild(oddsEl);
     card.appendChild(wrap);
-    card.appendChild(name);
-    card.appendChild(oddsEl);
+    card.appendChild(info);
     card.onclick = () => selectHorse(i);
     grid.appendChild(card);
   });
@@ -1039,15 +1108,16 @@ function generateRaceCaption(stageIndex) {
   const isDuck = playerHorse.spriteKey === 'duck1';
 
   const duckLines = [
-    `${playerHorse.name} is a DUCK. A literal duck. And somehow ${ordinal(playerRank)}.`,
-    `Stewards are confused. ${playerHorse.name} is quacking. Still ${ordinal(playerRank)} though.`,
-    `${playerHorse.name} — a duck — is sitting ${ordinal(playerRank)}. No one has answers.`,
-    `Veterinarians have been notified. ${playerHorse.name} is a duck in ${ordinal(playerRank)}.`,
-    `The crowd is baffled. ${playerHorse.name} is a duck running ${ordinal(playerRank)}.`,
-    `${playerHorse.name} waddles on. Currently ${ordinal(playerRank)}, somehow.`,
-    `Still a duck. Still ${ordinal(playerRank)}. We are all witnessing something.`,
-    `${playerHorse.name} has no business being ${ordinal(playerRank)}. And yet.`,
-    `Quack. That's all. Just quack. ${ordinal(playerRank)}.`,
+    `${playerHorse.name} is a duck. A LITERAL DUCK. Somehow ${ordinal(playerRank)}. The stewards are Googling rulebooks.`,
+    `${playerHorse.name} is quacking. In ${ordinal(playerRank)}. This is real life, folks.`,
+    `Vet's on the phone. ${playerHorse.name} — still a duck — is sitting ${ordinal(playerRank)}.`,
+    `${playerHorse.name} just laid an egg. Also ${ordinal(playerRank)}. Multitasking icon.`,
+    `${ordinal(playerRank)}. A duck. A literal duck. We give up trying to explain this.`,
+    `${playerHorse.name} waddling in ${ordinal(playerRank)}. Somewhere a jockey is crying.`,
+    `Just in: ${playerHorse.name} is a duck. And ${ordinal(playerRank)}. The hat-wearing crowd is rioting.`,
+    `${playerHorse.name} stopped for a pond that wasn't there. Still ${ordinal(playerRank)}.`,
+    `Quack. That's the only analysis we have. ${ordinal(playerRank)}.`,
+    `${playerHorse.name}'s agent is now insisting this was always a duck race.`,
   ];
 
   let playerText;
@@ -1055,143 +1125,136 @@ function generateRaceCaption(stageIndex) {
     playerText = duckLines[Math.floor(Math.random() * duckLines.length)];
   } else if (playerRank === 1) {
     playerText = pick([
-      `Your horse ${playerHorse.name} leads the field!`,
-      `${playerHorse.name} is in front — keep it together!`,
-      `${playerHorse.name} commands from the front!`,
-      `Out in front, it's ${playerHorse.name}!`,
+      `YOUR horse ${playerHorse.name} is FIRST. Don't blink. Or do. Who am I to tell you how to blink.`,
+      `${playerHorse.name} is in front and you just made eye contact with destiny.`,
+      `${playerHorse.name} leads. Start rehearsing your victory speech. Keep it humble.`,
+      `Out in front: ${playerHorse.name}. Your accountant is doing a little jig.`,
+      `${playerHorse.name} is LEADING. Do NOT tell them — they'll get cocky.`,
     ]);
   } else if (playerRank === 2) {
     playerText = pick([
-      `${playerHorse.name} is stalking the leader.`,
-      `${playerHorse.name} sits just off the pace.`,
-      `${playerHorse.name} is right there — biding time.`,
-      `${playerHorse.name} in 2nd, coiled and ready.`,
+      `${playerHorse.name} sitting 2nd, plotting, scheming, possibly drafting a memoir.`,
+      `${playerHorse.name} is right there — stalking like it saw a treat.`,
+      `${playerHorse.name} in 2nd, coiled tighter than your last tax return.`,
+      `${playerHorse.name} glued to the leader like a demanding toddler.`,
     ]);
   } else if (playerRank <= 4) {
     playerText = pick([
-      `${playerHorse.name} lurks in ${ordinal(playerRank)}.`,
-      `${playerHorse.name} is in ${ordinal(playerRank)}, still in the hunt.`,
-      `${playerHorse.name} tracking in ${ordinal(playerRank)}.`,
-      `${playerHorse.name} sitting ${ordinal(playerRank)}, waiting for a gap.`,
+      `${playerHorse.name} lurking in ${ordinal(playerRank)}. Menacing. Respectfully.`,
+      `${playerHorse.name} camped in ${ordinal(playerRank)}, still in the hunt, mildly snackish.`,
+      `${playerHorse.name} tracking in ${ordinal(playerRank)} like a hungry detective.`,
+      `${ordinal(playerRank)} for ${playerHorse.name}. Biding time. Paying rent.`,
     ]);
   } else if (playerRank === projected.length) {
     playerText = pick([
-      `${playerHorse.name} is LAST. Yikes.`,
-      `${playerHorse.name} bringing up the rear… way back.`,
-      `Dead last: ${playerHorse.name}. Not great.`,
-      `${playerHorse.name} is touring the course from behind.`,
+      `${playerHorse.name} is DEAD last. Just out here jogging, enjoying nature.`,
+      `${playerHorse.name} bringing up the rear like a tourist.`,
+      `Last place: ${playerHorse.name}. It's not a race for them, it's a journey.`,
+      `${playerHorse.name} last. We'll send a postcard.`,
+      `${playerHorse.name} currently investigating a butterfly. ${ordinal(playerRank)}.`,
     ]);
   } else {
     playerText = pick([
-      `${playerHorse.name} is back in ${ordinal(playerRank)}.`,
-      `${playerHorse.name} finds ${ordinal(playerRank)}, needs to move.`,
-      `${playerHorse.name} has ground to make up from ${ordinal(playerRank)}.`,
-      `${ordinal(playerRank)} for ${playerHorse.name} — not ideal.`,
+      `${playerHorse.name} stuck in ${ordinal(playerRank)}, wondering where it all went wrong.`,
+      `${playerHorse.name} finds ${ordinal(playerRank)} — needs to find 2nd gear, frankly.`,
+      `${playerHorse.name} in ${ordinal(playerRank)}. The vibes are mid.`,
+      `${ordinal(playerRank)} for ${playerHorse.name}. Not great, not terrible, mostly just there.`,
     ]);
   }
 
-  if (stageIndex === 0) {
-    return pick([
-      `${leader.name} strides to the gate. ${trailer.name} looks uncertain. ${playerText}`,
-      `${leader.name} walks in calmly. ${trailer.name} is already nervous. ${playerText}`,
-      `Into the gate — ${leader.name} looking sharp. ${trailer.name} acting up. ${playerText}`,
-      `The field loads up. ${leader.name} settles first. ${trailer.name} is a mess. ${playerText}`,
-      `${leader.name} draws the rail. ${trailer.name} is fidgeting badly. ${playerText}`,
-    ]);
-  }
   if (stageIndex === 1) {
     return leaderChanged
       ? pick([
-          `${leader.name} rockets out! ${prevLeader?.name ?? second.name} already fading. ${playerText}`,
-          `Boom — ${leader.name} explodes from the gate! ${prevLeader?.name ?? second.name} caught flat-footed. ${playerText}`,
-          `${leader.name} breaks on top! ${prevLeader?.name ?? second.name} stumbles at the start. ${playerText}`,
-          `Clean break for ${leader.name}! ${prevLeader?.name ?? second.name} left watching. ${playerText}`,
+          `AND THEY'RE OFF! ${leader.name} explodes out, ${prevLeader?.name ?? second.name} still Googling directions. ${playerText}`,
+          `Gate pops — ${leader.name} LAUNCHED. ${prevLeader?.name ?? second.name} stumbled over its own legs. ${playerText}`,
+          `${leader.name} breaks like a firework, ${prevLeader?.name ?? second.name} breaks like a bad date. ${playerText}`,
+          `Clean break for ${leader.name}! ${prevLeader?.name ?? second.name} appears to be reconsidering career choices. ${playerText}`,
         ])
       : pick([
-          `${leader.name} leads, ${second.name} right there. ${trailer.name} already in trouble. ${playerText}`,
-          `${leader.name} sets the pace, ${second.name} glued to their flank. ${trailer.name} looks cooked. ${playerText}`,
-          `Early leader: ${leader.name}. ${second.name} pressing hard. ${trailer.name} won't factor. ${playerText}`,
-          `${leader.name} goes to the front. ${second.name} tracking. ${trailer.name} is already lost. ${playerText}`,
-          `Out they come — ${leader.name} takes command. ${trailer.name} in the back, going nowhere fast. ${playerText}`,
+          `And we are RACING. ${leader.name} hits the front, ${second.name} clinging on, ${trailer.name} already writing a postcard home. ${playerText}`,
+          `${leader.name} sets the pace, ${second.name} glued to their flank, ${trailer.name} missed the memo. ${playerText}`,
+          `Out of the gate: ${leader.name} in front, ${second.name} chasing, ${trailer.name} — we assume — chasing butterflies. ${playerText}`,
+          `${leader.name} takes command. ${trailer.name} is technically in the race. Technically. ${playerText}`,
+          `${leader.name} goes. ${second.name} follows. ${trailer.name} waves at a fan. ${playerText}`,
         ]);
   }
   if (stageIndex === 2) {
     return leaderChanged
       ? pick([
-          `${leader.name} surges past ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `New leader — ${leader.name} rolls by ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `${prevLeader?.name ?? second.name} gives it up — ${leader.name} in front now! ${playerText}`,
-          `${leader.name} sweeps to the lead! ${prevLeader?.name ?? second.name} can't hold. ${playerText}`,
+          `NEW LEADER! ${leader.name} barges past ${prevLeader?.name ?? second.name} like it forgot its keys. ${playerText}`,
+          `${leader.name} bulldozes by ${prevLeader?.name ?? second.name}! Rude. Effective. ${playerText}`,
+          `${prevLeader?.name ?? second.name} panics, ${leader.name} pounces. ${playerText}`,
+          `${leader.name} seizes the lead! ${prevLeader?.name ?? second.name} is visibly offended. ${playerText}`,
         ])
       : pick([
-          `${leader.name} holds the edge. ${trailer.name} is cooked. ${playerText}`,
-          `${leader.name} still in charge. ${trailer.name} already a spectator. ${playerText}`,
-          `${leader.name} settles into rhythm. ${second.name} hanging close. ${trailer.name} fading. ${playerText}`,
-          `Cruising: ${leader.name} in front, ${second.name} keeps the pressure on. ${playerText}`,
-          `${leader.name} looks comfortable. ${trailer.name} has nothing left to give. ${playerText}`,
+          `${leader.name} holding the edge. ${trailer.name} is out here just vibing. ${playerText}`,
+          `${leader.name} cruising, ${second.name} snapping at its heels, ${trailer.name} running a completely different race. ${playerText}`,
+          `${leader.name} settles in. ${second.name} is close. ${trailer.name} spiritually unavailable. ${playerText}`,
+          `${leader.name} in front, ${second.name} in their shadow, ${trailer.name} in their own little world. ${playerText}`,
+          `${leader.name} looks relaxed. ${trailer.name} looks like they heard there's oats at the finish. ${playerText}`,
         ]);
   }
   if (stageIndex === 3) {
     return leaderChanged
       ? pick([
-          `${leader.name} takes over from ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `Lead change! ${leader.name} blows past ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `${prevLeader?.name ?? second.name} is swallowed up — ${leader.name} on the move! ${playerText}`,
-          `${leader.name} puts it away on ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `BIG MOVE! ${leader.name} storms past ${prevLeader?.name ?? second.name}! The crowd loses it, the jockey loses their hat. ${playerText}`,
+          `${leader.name} yoinks the lead from ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `Down the backstretch — ${leader.name} bullies past ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${prevLeader?.name ?? second.name} is COOKED. ${leader.name} on a mission. ${playerText}`,
         ])
       : pick([
-          `${leader.name} still rolling. ${trailer.name} has given up spiritually. ${playerText}`,
-          `${leader.name} grinding down the backstretch. ${trailer.name} is just running to finish. ${playerText}`,
-          `${leader.name} in command, ${second.name} breathing down their neck. ${playerText}`,
-          `Midrace, ${leader.name} leads. ${trailer.name} is going through the motions. ${playerText}`,
-          `${leader.name} shows the way. ${second.name} refuses to fold. ${trailer.name} is toast. ${playerText}`,
+          `${leader.name} still rolling. ${trailer.name} has emotionally left the race. ${playerText}`,
+          `${leader.name} down the backstretch like a freight train. ${trailer.name} like a tricycle. ${playerText}`,
+          `${leader.name} in command, ${second.name} huffing in their ear, ${trailer.name} running solo in a parallel universe. ${playerText}`,
+          `Midrace, ${leader.name} leads. ${trailer.name} is doing what I'd call "horse cardio." ${playerText}`,
+          `${leader.name} dictating. ${second.name} refuses to die. ${trailer.name} is composing haikus. ${playerText}`,
         ]);
   }
   if (stageIndex === 4) {
     return leaderChanged
       ? pick([
-          `${leader.name} makes a MOVE! Bye, ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `${leader.name} POUNCES — ${prevLeader?.name ?? second.name} is done! ${playerText}`,
-          `There it is! ${leader.name} explodes past ${prevLeader?.name ?? second.name}! ${playerText}`,
-          `${prevLeader?.name ?? second.name} is gone — ${leader.name} takes over with authority! ${playerText}`,
+          `THERE IT IS! ${leader.name} POUNCES — bye-bye, ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `${leader.name} boots it! ${prevLeader?.name ?? second.name} gets a faceful of dust and a side of regret. ${playerText}`,
+          `${leader.name} flips the switch! ${prevLeader?.name ?? second.name} looks like it dropped a sandwich. ${playerText}`,
+          `${prevLeader?.name ?? second.name} DONE. ${leader.name} takes over with a smirk you can feel from here. ${playerText}`,
         ])
       : pick([
-          `${leader.name} won't quit. ${second.name} is coming! ${trailer.name} is just jogging now. ${playerText}`,
-          `${leader.name} digging in as ${second.name} looms. ${trailer.name} is already thinking about dinner. ${playerText}`,
-          `${leader.name} under pressure from ${second.name}. This is getting interesting. ${playerText}`,
-          `${second.name} is closing on ${leader.name}! ${trailer.name} somewhere in the back. ${playerText}`,
-          `${leader.name} fighting off ${second.name}. ${trailer.name} gave up a furlong ago. ${playerText}`,
+          `${leader.name} refuses to fade. ${second.name} is COMING. ${trailer.name} is jogging toward a nap. ${playerText}`,
+          `${leader.name} grinding, ${second.name} looming, ${trailer.name} already doing mental meal prep. ${playerText}`,
+          `${leader.name} under pressure from ${second.name}. Things are getting spicy. ${playerText}`,
+          `${second.name} is reeling in ${leader.name}! ${trailer.name} is last. Bless them. ${playerText}`,
+          `${leader.name} fighting off ${second.name}. ${trailer.name} gave up at the quarter pole and has been coasting since. ${playerText}`,
         ]);
   }
   if (stageIndex === 5) {
     return leaderChanged
       ? pick([
-          `${leader.name} hits the front! ${prevLeader?.name ?? second.name} is done! ${playerText}`,
-          `${leader.name} takes command in the stretch! ${prevLeader?.name ?? second.name} crumbles! ${playerText}`,
-          `${prevLeader?.name ?? second.name} FADES — ${leader.name} blows past into the lead! ${playerText}`,
-          `Drama in the stretch — ${leader.name} rolls by ${prevLeader?.name ?? second.name}! ${playerText}`,
+          `STRETCH DRAMA! ${leader.name} grabs the lead! ${prevLeader?.name ?? second.name} evaporates! ${playerText}`,
+          `${leader.name} commandeers the stretch! ${prevLeader?.name ?? second.name} crumbles like stale bread! ${playerText}`,
+          `${prevLeader?.name ?? second.name} FADES — ${leader.name} blows by into the lead! Somebody call a medic for the other jockey's pride! ${playerText}`,
+          `Stretch chaos — ${leader.name} rolls past ${prevLeader?.name ?? second.name}! The rail is vibrating! ${playerText}`,
         ])
       : pick([
-          `${leader.name} turns for home. ${second.name} is desperate. ${playerText}`,
-          `Into the stretch — ${leader.name} in front, ${second.name} giving chase. ${playerText}`,
-          `${leader.name} hits the top of the lane. ${second.name} won't give up! ${playerText}`,
-          `${leader.name} for home — ${second.name} right there. This is a race! ${playerText}`,
-          `${leader.name} in front but ${second.name} is coming hard! ${playerText}`,
+          `${leader.name} turns for home — ${second.name} is desperate, foamy, furious. ${playerText}`,
+          `Into the stretch — ${leader.name} in front, ${second.name} refuses to accept it. ${playerText}`,
+          `${leader.name} hits the lane. ${second.name} is arriving with bad intentions. ${playerText}`,
+          `${leader.name} for home — ${second.name} right there. This race has ATTITUDE. ${playerText}`,
+          `${leader.name} in front, ${second.name} coming HOT. Somebody is about to get their heart broken. ${playerText}`,
         ]);
   }
   return leaderChanged
     ? pick([
-        `${leader.name} kicks clear! ${prevLeader?.name ?? second.name} gone! ${playerText}`,
-        `${leader.name} drives away! ${prevLeader?.name ?? second.name} has nothing left! ${playerText}`,
-        `${leader.name} surges clear at the wire! ${prevLeader?.name ?? second.name} fades! ${playerText}`,
-        `${prevLeader?.name ?? second.name} is swamped — ${leader.name} to the wire! ${playerText}`,
+        `${leader.name} kicks CLEAR at the wire! ${prevLeader?.name ?? second.name} left in the dust like a bad prom date! ${playerText}`,
+        `${leader.name} drives away! ${prevLeader?.name ?? second.name} out of fuel, out of luck, out of excuses! ${playerText}`,
+        `${leader.name} surges clear! ${prevLeader?.name ?? second.name} fades like a vacation tan! ${playerText}`,
+        `WIRE STUNNER — ${prevLeader?.name ?? second.name} is swamped, ${leader.name} punches the clock! ${playerText}`,
       ])
     : pick([
-        `${leader.name} for the wire — ${second.name} swinging wide! ${playerText}`,
-        `${leader.name} and ${second.name} — side by side for the wire! ${playerText}`,
-        `They're driving to the line! ${leader.name} holding off ${second.name}! ${playerText}`,
-        `Final strides — ${leader.name} digs in as ${second.name} throws everything at them! ${playerText}`,
-        `${leader.name} clinging to the lead! ${second.name} coming like a freight train! ${playerText}`,
+        `THEY'RE DRIVING! ${leader.name} for the wire — ${second.name} swinging wide like a chandelier! ${playerText}`,
+        `${leader.name} and ${second.name} side by side — your heart is a drum solo! ${playerText}`,
+        `Final strides! ${leader.name} digs, ${second.name} snarls, the wire approaches! ${playerText}`,
+        `${leader.name} holds! ${second.name} lunges! This is what we came for! ${playerText}`,
+        `${leader.name} clinging! ${second.name} charging like an unpaid bill! TO THE WIRE! ${playerText}`,
       ]);
 }
 
@@ -1491,34 +1554,55 @@ function getRaceSecond() { return getSortedRaceHorses()[1]; }
 function getRaceTrailer() { const s = getSortedRaceHorses(); return s[s.length - 1]; }
 function getHorseRank(idx) { return getSortedRaceHorses().findIndex(h => h.id === idx) + 1; }
 
+let currentRaceCanvas = null;
+function resizeCurrentRaceCanvas() {
+  if (!currentRaceCanvas) return;
+  const parent = currentRaceCanvas.parentElement;
+  if (!parent) return;
+  currentRaceCanvas.width = parent.clientWidth;
+  currentRaceCanvas.height = parent.clientHeight;
+}
+window.addEventListener('resize', resizeCurrentRaceCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCurrentRaceCanvas, 100));
+
 function runRaceStage(stageIndex) {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   const cfg = getStageCopy(stageIndex);
   showScreen(cfg.screenId);
 
   const canvas = document.getElementById(cfg.canvasId);
+  currentRaceCanvas = canvas;
   canvas.width = canvas.parentElement.clientWidth;
   canvas.height = canvas.parentElement.clientHeight;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width;
-  const H = canvas.height;
-
-  const trackTop = 44;
-  const laneH = Math.min((H - trackTop - 28) / NUM_HORSES, 82);
-  const startX = 50;
-  const finishX = W - 150;
-  const raceWidth = finishX - startX;
 
   const startPositions = raceHorses.map(h => h.progress);
   const targetPositions = raceHorses.map(h => h.stageTargets[stageIndex]);
   const stageDuration = cfg.duration;
   const captionEl = document.getElementById(cfg.commentaryId);
-  const captionText = generateRaceCaption(stageIndex);
-  captionEl.textContent = captionText;
-  captionEl.style.opacity = '1';
-  if (stageIndex > 0) speakCaption(captionText);
+  const captionWrap = captionEl ? captionEl.closest('.race-commentary') : null;
+  if (stageIndex === 0) {
+    // Walking to the gate — no commentary. Keep the band hidden so nothing shows.
+    if (captionEl) captionEl.textContent = '';
+    if (captionWrap) captionWrap.style.display = 'none';
+  } else {
+    const captionText = generateRaceCaption(stageIndex);
+    captionEl.textContent = captionText;
+    if (captionWrap) captionWrap.style.display = 'flex';
+    captionEl.style.opacity = '1';
+    speakCaption(captionText);
+  }
 
   function drawScene(pct, now) {
+    // Recompute layout every frame so orientation changes / window resizes look correct
+    const W = canvas.width;
+    const H = canvas.height;
+    const trackTop = 44;
+    const laneH = Math.min((H - trackTop - 28) / NUM_HORSES, 82);
+    const startX = 50;
+    const finishX = W - 150;
+    const raceWidth = finishX - startX;
+
     ctx.clearRect(0, 0, W, H);
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, '#3a6b32');
