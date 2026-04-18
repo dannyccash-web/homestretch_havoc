@@ -763,17 +763,28 @@ const NUM_HORSES = 11;
 // INIT
 // ============================================================
 window.onload = function() {
-  // Always start a new play session at $500.
-  // The old version restored bankroll from localStorage, which could make
-  // players appear to start with a leftover amount like $1800.
-  balance = 500;
-  balanceAtRaceStart = 500;
+  // Restore bankroll from localStorage so it persists across sessions.
+  // Guard against NaN/negative values. Default to $500 on first play.
+  try {
+    const saved = localStorage.getItem('hh_balance');
+    const parsed = saved !== null ? parseFloat(saved) : NaN;
+    if (isFinite(parsed) && parsed >= 0) {
+      balance = parsed;
+    } else {
+      balance = 500;
+    }
+  } catch (e) {
+    balance = 500;
+  }
+  balanceAtRaceStart = balance;
 
   let loaded = 0;
   const keys = Object.keys(SPRITE_PATHS);
   keys.forEach(key => {
     const img = new Image();
     img.onload = () => {
+      // Compute per-frame alignment offsets so the horse animates without jitter.
+      try { computeFrameOffsets(key); } catch (e) { /* CORS-tainted canvas on file://; fall back to no offsets */ }
       loaded++;
       if (loaded === keys.length) setTimeout(() => showScreen('start-screen'), 400);
     };
@@ -789,7 +800,17 @@ function showScreen(id) {
 }
 
 function saveBalance() {
-  // Intentionally no-op. Bankroll should reset to $500 on a fresh page load.
+  // Persist bankroll so it survives page reloads. Silently ignore storage errors
+  // (private-browsing, quota, etc.) — the game should still play fine in memory.
+  try {
+    localStorage.setItem('hh_balance', String(balance));
+  } catch (e) { /* no-op */ }
+}
+
+function resetBalance() {
+  balance = 500;
+  balanceAtRaceStart = 500;
+  saveBalance();
 }
 
 function shuffle(arr) {
@@ -841,9 +862,96 @@ function generateHorses() {
 // Cache for white-knocked-out duck frames (keyed by frame index)
 const duckFrameCache = {};
 
+// Per-sprite alignment offsets. Each entry is an array of 16 { ox, oy } pairs,
+// in SOURCE pixels, representing how much the frame's contents should be shifted
+// to align with the mean CoM across all 16 frames. This cancels out the
+// "jumping around" you see when raw 384x256 cells are each blitted at the same
+// screen slot even though the horse art inside each cell sits at slightly
+// different positions.
+const spriteFrameOffsets = {};
+
+function computeFrameOffsets(spriteKey) {
+  const img = spriteImages[spriteKey];
+  if (!img || !img.complete || !img.naturalWidth) return;
+  const oc = document.createElement('canvas');
+  oc.width = FRAME_W;
+  oc.height = FRAME_H;
+  const octx = oc.getContext('2d');
+
+  const stats = [];
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    const col = i % SPRITE_COLS;
+    const row = Math.floor(i / SPRITE_COLS);
+    octx.clearRect(0, 0, FRAME_W, FRAME_H);
+    octx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+
+    let id;
+    try {
+      id = octx.getImageData(0, 0, FRAME_W, FRAME_H);
+    } catch (e) {
+      // CORS-tainted canvas (usually from file:// origin). Skip offsets entirely.
+      return;
+    }
+    const d = id.data;
+    let sumX = 0, sumY = 0, mass = 0;
+    // Sample every 2 pixels — plenty for centroid accuracy and 4x faster.
+    for (let y = 0; y < FRAME_H; y += 2) {
+      const rowBase = y * FRAME_W * 4;
+      for (let x = 0; x < FRAME_W; x += 2) {
+        const a = d[rowBase + x * 4 + 3];
+        if (a > 24) {
+          sumX += x * a;
+          sumY += y * a;
+          mass += a;
+        }
+      }
+    }
+    if (mass < 1) {
+      stats.push({ cx: FRAME_W / 2, cy: FRAME_H / 2 });
+    } else {
+      stats.push({ cx: sumX / mass, cy: sumY / mass });
+    }
+  }
+
+  // Mean centroid across all frames — use as the alignment reference.
+  let meanX = 0, meanY = 0;
+  for (const s of stats) { meanX += s.cx; meanY += s.cy; }
+  meanX /= stats.length;
+  meanY /= stats.length;
+
+  // Offset in source pixels. Clamp to half a frame to avoid disasters on
+  // weird/empty frames.
+  const CAP_X = FRAME_W * 0.3;
+  const CAP_Y = FRAME_H * 0.3;
+  const offsets = stats.map(s => {
+    let ox = meanX - s.cx;
+    let oy = meanY - s.cy;
+    if (ox > CAP_X) ox = CAP_X; else if (ox < -CAP_X) ox = -CAP_X;
+    if (oy > CAP_Y) oy = CAP_Y; else if (oy < -CAP_Y) oy = -CAP_Y;
+    return { ox, oy };
+  });
+  spriteFrameOffsets[spriteKey] = offsets;
+}
+
+function getFrameOffset(spriteKey, col, row, dw, dh) {
+  const offs = spriteFrameOffsets[spriteKey];
+  if (!offs) return { shiftX: 0, shiftY: 0 };
+  const frameIdx = row * SPRITE_COLS + col;
+  const o = offs[frameIdx];
+  if (!o) return { shiftX: 0, shiftY: 0 };
+  // Scale source-pixel offset → destination-pixel offset.
+  return {
+    shiftX: o.ox * (dw / FRAME_W),
+    shiftY: o.oy * (dh / FRAME_H),
+  };
+}
+
 function drawSpriteToCtx(ctx, spriteKey, col, row, dx, dy, dw, dh) {
   const img = spriteImages[spriteKey];
   if (!img) return;
+  const { shiftX, shiftY } = getFrameOffset(spriteKey, col, row, dw, dh);
+  const tx = dx + shiftX;
+  const ty = dy + shiftY;
   if (spriteKey === 'duck1') {
     const frameKey = row * SPRITE_COLS + col;
     if (!duckFrameCache[frameKey]) {
@@ -851,17 +959,19 @@ function drawSpriteToCtx(ctx, spriteKey, col, row, dx, dy, dw, dh) {
       oc.width = FRAME_W; oc.height = FRAME_H;
       const oc2 = oc.getContext('2d');
       oc2.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
-      const id = oc2.getImageData(0, 0, FRAME_W, FRAME_H);
-      const d = id.data;
-      for (let p = 0; p < d.length; p += 4) {
-        if (d[p] > 220 && d[p+1] > 220 && d[p+2] > 220) d[p+3] = 0;
-      }
-      oc2.putImageData(id, 0, 0);
+      try {
+        const id = oc2.getImageData(0, 0, FRAME_W, FRAME_H);
+        const d = id.data;
+        for (let p = 0; p < d.length; p += 4) {
+          if (d[p] > 220 && d[p+1] > 220 && d[p+2] > 220) d[p+3] = 0;
+        }
+        oc2.putImageData(id, 0, 0);
+      } catch (e) { /* tainted canvas — fall through and draw as-is */ }
       duckFrameCache[frameKey] = oc;
     }
-    ctx.drawImage(duckFrameCache[frameKey], 0, 0, FRAME_W, FRAME_H, dx, dy, dw, dh);
+    ctx.drawImage(duckFrameCache[frameKey], 0, 0, FRAME_W, FRAME_H, tx, ty, dw, dh);
   } else {
-    ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh);
+    ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, tx, ty, dw, dh);
   }
 }
 function drawSpriteFrame(canvas, spriteKey, frame) {
@@ -1937,6 +2047,7 @@ function finishMuckStalls() {
 function completeMuckStalls() {
   if (!muckState) return;
   balance += 10;
+  saveBalance();
   const timerEl = document.getElementById('muck-timer');
   if (timerEl) timerEl.textContent = '0.0s';
   cleanupMuckEvents();
