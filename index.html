@@ -123,8 +123,8 @@
   .start-title-wrapper { text-align: center; margin-bottom: 96px; animation: titleDrop 1s ease-out; max-width: 100%; }
   @keyframes titleDrop { from { transform: translateY(-80px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-  .start-subtitle { font-size: 1.1rem; letter-spacing: 0.6em; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; }
-  .start-title { font-family: 'Rye', serif; font-size: clamp(2.6rem, 14vw, 6rem); color: var(--cream); text-shadow: 4px 4px 0px var(--dark-brown), 0 0 60px rgba(201,149,42,0.6); line-height: 1; }
+  .start-subtitle { font-size: 1.1rem; letter-spacing: 0.6em; color: #ffffff; text-transform: uppercase; margin-bottom: 12px; }
+  .start-title { font-family: 'Rye', serif; font-size: clamp(2rem, 11vw, 5rem); color: var(--cream); text-shadow: 3px 3px 0px var(--dark-brown), 0 0 60px rgba(201,149,42,0.6); line-height: 1.05; max-width: 100%; overflow-wrap: break-word; }
   .title-line2 { color: var(--gold); display: block; }
   .start-deco { display: flex; align-items: center; gap: 16px; margin-top: 16px; justify-content: center; }
   .start-deco-line { height: 2px; width: 80px; background: linear-gradient(to right, transparent, var(--gold)); }
@@ -1305,7 +1305,7 @@ function getStageCopy(stageIndex) {
       screenId: 'race-screen-7',
       canvasId: 'race-canvas-7',
       commentaryId: 'commentary-text-7',
-      duration: 11200
+      duration: 8200
     }
   ][stageIndex];
 }
@@ -1890,28 +1890,8 @@ function runRaceStage(stageIndex) {
       ctx.stroke();
     }
 
-    // --- Photo-finish camera: zoom + pan onto the lead horses during the last stretch ---
-    let camScale = 1, camTx = 0, camTy = 0;
-    if (stageIndex === 6 && pct > 0.5) {
-      const zoomP = Math.min((pct - 0.5) / 0.18, 1);
-      const easedZ = 1 - Math.pow(1 - zoomP, 2);
-      camScale = 1 + easedZ * 0.95; // up to ~1.95x zoom
-
-      const sorted = getSortedRaceHorses();
-      const topHorses = sorted.slice(0, 3);
-      const laneIdxOf = (h) => raceHorses.findIndex(r => r.id === h.id);
-      const avgLaneIdx = topHorses.reduce((a, h) => a + laneIdxOf(h), 0) / topHorses.length;
-      const leaderX = startX + topHorses[0].progress * raceWidth + HORSE_W * 0.5;
-      const focusY = trackTop + 34 + avgLaneIdx * laneH + laneH / 2;
-
-      // We want the leader near the right-center of the screen so the wire is visible
-      camTx = W * 0.62 - leaderX * camScale;
-      camTy = H * 0.5 - focusY * camScale;
-    }
-
-    // Everything track-space (finish line, gate, horses, labels) is drawn under the camera transform.
+    // Photo-finish is rendered at 1x (no camera zoom) so it matches the rest of the race.
     ctx.save();
-    if (camScale !== 1) ctx.setTransform(camScale, 0, 0, camScale, camTx, camTy);
 
     if (stageIndex === 6) {
       // Finish line slides in from the right: starts off-screen right, lands at finishX + HORSE_W*0.6
@@ -1982,20 +1962,7 @@ function runRaceStage(stageIndex) {
     }
 
     raceHorses.forEach((h, idx) => {
-      // Stage 6 uses a custom ease so the last ~15% of the stretch is slow-mo for the photo finish.
-      let eased;
-      if (stageIndex === 6) {
-        if (pct < 0.5) {
-          const p = pct / 0.5;
-          const ep = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-          eased = 0.85 * ep;
-        } else {
-          const p = (pct - 0.5) / 0.5;
-          eased = 0.85 + 0.15 * p; // slow, near-linear final stretch
-        }
-      } else {
-        eased = pct < 0.5 ? 2 * pct * pct : 1 - Math.pow(-2 * pct + 2, 2) / 2;
-      }
+      const eased = pct < 0.5 ? 2 * pct * pct : 1 - Math.pow(-2 * pct + 2, 2) / 2;
       h.progress = startPositions[idx] + (targetPositions[idx] - startPositions[idx]) * eased;
 
       // Freeze animation in gate pause (0.62–0.84), animate otherwise
