@@ -862,12 +862,22 @@ let muckState = null;
 let muckAnimFrame = null;
 let balanceAtRaceStart = 500; // snapshot before race
 
-// Sprite sheet: 4 cols x 4 rows = 16 frames, each frame 384x256
+// Sprite sheet: nominally 4x4 frames at 384x256, but the actual horse sprites
+// inside each cell are NOT uniformly positioned — rows 2 and 3 in particular are
+// shifted such that the naive cell boundaries slice through neighboring horses.
+// These per-frame source rectangles are hand-tuned to tightly enclose each horse
+// (verified empirically across horse1/3/7/11 + duck1 sheets, all 1536x1024) so
+// no piece of a neighboring frame ever bleeds in.
 const SPRITE_COLS = 4;
 const SPRITE_ROWS = 4;
-const FRAME_W = 384;
+const FRAME_W = 384;          // legacy constant — only used for duck chroma-key canvas
 const FRAME_H = 256;
 const TOTAL_FRAMES = 16;
+// Tight per-frame source rects (all sprite sheets share this layout).
+const FRAME_SX = [23, 386, 760, 1151];
+const FRAME_SY = [46,  275, 490, 715];
+const FRAME_SW = 330;
+const FRAME_SH = 220;
 
 const HORSE_W = 110;
 const HORSE_H = 73;
@@ -897,8 +907,8 @@ window.onload = function() {
   keys.forEach(key => {
     const img = new Image();
     img.onload = () => {
-      // Compute per-frame alignment offsets so the horse animates without jitter.
-      try { computeFrameOffsets(key); } catch (e) { /* CORS-tainted canvas on file://; fall back to no offsets */ }
+      // Per-frame centroid offsets are no longer needed — FRAME_SX/SY already
+      // tightly enclose each horse, so the animation is stable by construction.
       loaded++;
       if (loaded === keys.length) setTimeout(() => showScreen('start-screen'), 400);
     };
@@ -1065,18 +1075,17 @@ function getFrameOffset(spriteKey, col, row, dw, dh) {
 function drawSpriteToCtx(ctx, spriteKey, col, row, dx, dy, dw, dh) {
   const img = spriteImages[spriteKey];
   if (!img) return;
-  const { shiftX, shiftY } = getFrameOffset(spriteKey, col, row, dw, dh);
-  const tx = dx + shiftX;
-  const ty = dy + shiftY;
+  const sx = FRAME_SX[col];
+  const sy = FRAME_SY[row];
   if (spriteKey === 'duck1') {
     const frameKey = row * SPRITE_COLS + col;
     if (!duckFrameCache[frameKey]) {
       const oc = document.createElement('canvas');
-      oc.width = FRAME_W; oc.height = FRAME_H;
+      oc.width = FRAME_SW; oc.height = FRAME_SH;
       const oc2 = oc.getContext('2d');
-      oc2.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+      oc2.drawImage(img, sx, sy, FRAME_SW, FRAME_SH, 0, 0, FRAME_SW, FRAME_SH);
       try {
-        const id = oc2.getImageData(0, 0, FRAME_W, FRAME_H);
+        const id = oc2.getImageData(0, 0, FRAME_SW, FRAME_SH);
         const d = id.data;
         for (let p = 0; p < d.length; p += 4) {
           if (d[p] > 220 && d[p+1] > 220 && d[p+2] > 220) d[p+3] = 0;
@@ -1085,9 +1094,9 @@ function drawSpriteToCtx(ctx, spriteKey, col, row, dx, dy, dw, dh) {
       } catch (e) { /* tainted canvas — fall through and draw as-is */ }
       duckFrameCache[frameKey] = oc;
     }
-    ctx.drawImage(duckFrameCache[frameKey], 0, 0, FRAME_W, FRAME_H, tx, ty, dw, dh);
+    ctx.drawImage(duckFrameCache[frameKey], 0, 0, FRAME_SW, FRAME_SH, dx, dy, dw, dh);
   } else {
-    ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, tx, ty, dw, dh);
+    ctx.drawImage(img, sx, sy, FRAME_SW, FRAME_SH, dx, dy, dw, dh);
   }
 }
 function drawSpriteFrame(canvas, spriteKey, frame) {
@@ -1212,8 +1221,38 @@ function startRace() {
     .sort((a, b) => b.score - a.score)
     .map((entry, idx) => ({ ...entry, place: idx + 1 }));
 
+  // Pace profiles — each shape defines how a horse's pace shifts across the
+  // first six stages. Values are added to the base stage-end progress, so a
+  // +0.15 at stage 0 means "runs ~0.15 ahead of the baseline at that stage".
+  // Shape sums to roughly 0 so horses that spike early fall back later, and
+  // vice-versa — creating believable lead changes mid-race. The last (7th)
+  // stage target is locked to place so the predetermined winner always wins.
+  const paceShapes = [
+    [ 0.18,  0.14,  0.06, -0.04, -0.14, -0.20],  // fast starter, fades
+    [-0.16, -0.12, -0.04,  0.04,  0.12,  0.16],  // slow starter, charges late
+    [-0.10,  0.00,  0.14,  0.12, -0.06, -0.10],  // mid-race move
+    [ 0.10,  0.08,  0.02, -0.02, -0.06, -0.12],  // early lead, holds shape
+    [-0.06, -0.12, -0.02,  0.08,  0.12,  0.00],  // comes from mid-pack
+    [ 0.04, -0.08,  0.06, -0.06,  0.08, -0.04],  // up-and-down, rollercoaster
+    [ 0.00,  0.00,  0.00,  0.00,  0.00,  0.00],  // steady, by-the-book
+  ];
+
   raceHorses = horses.map((h, i) => {
     const place = finishOrder.find(x => x.i === i).place;
+    // Pick a random pace profile + random intensity. Each horse runs its own race.
+    const shape = paceShapes[Math.floor(Math.random() * paceShapes.length)];
+    const intensity = 0.7 + Math.random() * 0.8; // 0.7–1.5× commitment to the shape
+    // Baseline stage-end progress (how far a mid-pack horse covers by end of each stage)
+    const base = [0.13, 0.30, 0.46, 0.63, 0.80, 0.97];
+    // place pulls slower horses back a little every stage; winners drift ahead.
+    const placeDrag = (s) => place * (0.008 + s * 0.003);
+    const jitter = () => (Math.random() - 0.5) * 0.04;
+    const targets = base.map((b, s) =>
+      Math.max(0.02 + s * 0.04, b + shape[s] * intensity - placeDrag(s) + jitter())
+    );
+    // Final stage: locked to place so chooseWinner's call holds; small random
+    // gap so photo finishes stay exciting.
+    targets.push(Math.max(1.05, 1.38 - place * 0.078 + Math.random() * 0.028));
     return {
       ...h,
       id: i,
@@ -1222,15 +1261,7 @@ function startRace() {
       progress: 0,
       animFrame: Math.floor(Math.random() * TOTAL_FRAMES),
       bobPhase: Math.random() * Math.PI * 2,
-      stageTargets: [
-        Math.max(0.02, 0.13 - place * 0.008 + Math.random() * 0.014),
-        Math.max(0.12, 0.30 - place * 0.014 + Math.random() * 0.016),
-        Math.max(0.26, 0.46 - place * 0.018 + Math.random() * 0.018),
-        Math.max(0.40, 0.63 - place * 0.022 + Math.random() * 0.018),
-        Math.max(0.54, 0.80 - place * 0.028 + Math.random() * 0.020),
-        Math.max(0.68, 0.97 - place * 0.034 + Math.random() * 0.022),
-        Math.max(1.05, 1.38 - place * 0.072 + Math.random() * 0.024)
-      ]
+      stageTargets: targets
     };
   });
 
@@ -1894,31 +1925,31 @@ function runRaceStage(stageIndex) {
     ctx.save();
 
     if (stageIndex === 6) {
-      // Finish line slides in from the right: starts off-screen right, lands at finishX + HORSE_W*0.6
-      const flTarget = finishX + HORSE_W * 0.6;
-      const flSlideStart = 0.18; // pct when it starts arriving
-      const flSlideEnd = 0.48;   // pct when fully in place
-      let flX;
-      if (pct < flSlideStart) {
-        flX = W + 60; // off-screen right
-      } else if (pct < flSlideEnd) {
-        const sp = (pct - flSlideStart) / (flSlideEnd - flSlideStart);
-        const esp = 1 - Math.pow(1 - sp, 3); // ease-out cubic
-        flX = W + 60 + (flTarget - W - 60) * esp;
-      } else {
-        flX = flTarget;
+      // Finish line is a track marker that sweeps right→left across the screen at
+      // exactly the same speed as the motion ticks (tickSpeed = 0.48 px/ms),
+      // entering from off-screen right and exiting completely off-screen left.
+      // Spawn it timed so it sweeps across during the climactic final stretch.
+      const fl_speed = 0.48;            // px/ms — must match tickSpeed above
+      const fl_appearMs = 1200;          // wait this long into stage 6 before spawn
+      const fl_elapsedSinceSpawn = pct * stageDuration - fl_appearMs;
+      const finishLineWidth = 24;        // visual width of the checker stripe
+      // Position so it starts just off the right edge at spawn, then drifts left.
+      const flX = W + 20 - fl_elapsedSinceSpawn * fl_speed;
+      // Only draw while the line is anywhere within the visible viewport.
+      if (fl_elapsedSinceSpawn > 0 && flX + finishLineWidth > -10 && flX < W + 30) {
+        for (let y = trackTop + 30; y < trackTop + 30 + laneH * laneCount; y += 14) {
+          const even = Math.floor((y - trackTop - 30) / 14) % 2 === 0;
+          ctx.fillStyle = even ? '#fff' : '#222';
+          ctx.fillRect(flX, y, 10, 7);
+          ctx.fillStyle = even ? '#222' : '#fff';
+          ctx.fillRect(flX + 10, y, 10, 7);
+        }
+        // White post + red flag on top
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(flX + 5, trackTop - 2, 4, 34);
+        ctx.fillStyle = '#EB5757';
+        ctx.fillRect(flX + 5, trackTop - 2, 28, 16);
       }
-      for (let y = trackTop + 30; y < trackTop + 30 + laneH * laneCount; y += 14) {
-        const even = Math.floor((y - trackTop - 30) / 14) % 2 === 0;
-        ctx.fillStyle = even ? '#fff' : '#222';
-        ctx.fillRect(flX, y, 10, 7);
-        ctx.fillStyle = even ? '#222' : '#fff';
-        ctx.fillRect(flX + 10, y, 10, 7);
-      }
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(flX + 5, trackTop - 2, 4, 34);
-      ctx.fillStyle = '#EB5757';
-      ctx.fillRect(flX + 5, trackTop - 2, 28, 16);
     }
 
     const gateX = startX + 86;
